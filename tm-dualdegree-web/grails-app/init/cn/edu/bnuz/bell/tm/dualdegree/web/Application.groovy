@@ -1,4 +1,4 @@
-package tm.dualdegree.web
+package cn.edu.bnuz.bell.tm.dualdegree.web
 
 import cn.edu.bnuz.bell.config.ExternalConfigLoader
 import cn.edu.bnuz.bell.menu.module.EnableModuleMenu

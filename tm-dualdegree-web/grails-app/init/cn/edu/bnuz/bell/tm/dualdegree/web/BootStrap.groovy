@@ -1,4 +1,4 @@
-package tm.dualdegree.web
+package cn.edu.bnuz.bell.tm.dualdegree.web
 
 class BootStrap {
 
