@@ -3,11 +3,12 @@ package tm.dualdegree.web
 class UrlMappings {
 
     static mappings = {
-        "/$controller/$action?/$id?(.$format)?"{
-            constraints {
-                // apply constraints here
-            }
-        }
+
+        "/agreements"(resources: 'agreementForm', includes: ['index'])
+
+        "/settings"(resources: 'setting', includes: ['index'])
+
+        "/studentAbroads"(resources: 'studentAbroadAdmin', includes: ['index'])
 
         "/"(view:"/index")
         "500"(view:'/error')
