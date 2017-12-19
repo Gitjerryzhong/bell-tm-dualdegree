@@ -5,6 +5,7 @@ class UrlMappings {
     static mappings = {
 
         "/agreements"(resources: 'agreementForm', includes: ['index'])
+        "/agreement-views"(resources: 'agreementView', includes: ['index'])
 
         "/settings"(resources: 'setting', includes: ['index'])
 

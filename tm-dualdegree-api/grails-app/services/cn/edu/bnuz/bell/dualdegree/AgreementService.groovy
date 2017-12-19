@@ -1,22 +1,27 @@
 package cn.edu.bnuz.bell.dualdegree
 
 import cn.edu.bnuz.bell.master.Major
+import cn.edu.bnuz.bell.security.SecurityService
+import cn.edu.bnuz.bell.security.UserLogService
 import cn.edu.bnuz.bell.utils.CollectionUtils
 import cn.edu.bnuz.bell.utils.GroupCondition
+import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 
 @Transactional
 class AgreementService {
+    SecurityService securityService
+    UserLogService userLogService
+
     /**
      * 协议列表
      */
-
     def list() {
         Agreement.executeQuery '''
 select new map(
     agreement.id                as      id,
     agreement.name              as      name,
-    gr.name                  as      groupName,
+    gr.name                     as      groupName,
     agreement.universityEn      as      universityEn,
     agreement.universityCn      as      universityCn,
     agreement.memo              as      memo
@@ -42,6 +47,10 @@ order by agreement.id
                     major: Major.load(item.id),
                     majorOptions: item.majorOptions
             ))
+
+//          添加到自助打印系统中
+            def groupPrint = new GroupPrint(id: item.id, name: form.group.name)
+            groupPrint.save()
         }
         form.save()
         return form
@@ -164,7 +173,6 @@ where agreement.id = :id
             form.universityEn = cmd.universityEn
             form.group = AgreementGroup.load(cmd.group)
             form.memo = cmd.memo
-            println cmd.memo
 
             cmd.addedItems.each { item ->
                 def major = Major.load(item.id)
@@ -175,10 +183,18 @@ where agreement.id = :id
                             majorOptions: item.majorOptions
                     ))
                 }
+
+//              添加到自助打印系统中
+                def groupPrint = new GroupPrint(majorId: item.id, name: form.group.name)
+                def check = GroupPrint.get(groupPrint)
+                if (!check) {
+                    groupPrint.save()
+                }
             }
 
             cmd.removedItems.each {
                 def agreementItem = AgreementItem.load(new AgreementItem(agreement: form, major: Major.load(it)))
+                userLogService.log(securityService.userId,securityService.ipAddress,"DELETE", agreementItem,"${agreementItem as JSON}")
                 form.removeFromItem(agreementItem)
                 agreementItem.delete()
             }
@@ -201,5 +217,53 @@ from AgreementItem item join item.major major join major.subject subject join ma
 where item.agreement.id = :id
 order by department.name, subject.name, major.grade, item.majorOptions
 ''',[id: agreementId]
+    }
+
+    /**
+     * 特定学院相关协议
+     */
+    def findAgreementsByDepartment(String departmentId) {
+        def list = AgreementItem.executeQuery'''
+select new map(
+    major.id                    as id,
+    item.majorOptions           as majorOptions,
+    major.grade                 as grade,
+    subject.name                as subjectName,
+    gr.name                     as groupName,
+    agreement.universityEn      as      universityEn,
+    agreement.universityCn      as      universityCn
+)
+from AgreementItem item join item.major major 
+join major.subject subject 
+join major.department department
+join item.agreement agreement
+join agreement.group gr
+where department.id = :id
+order by subject.name, gr.name, agreement.universityEn, major.grade, item.majorOptions
+''',[id: departmentId]
+        List<GroupCondition> conditions = [
+                new GroupCondition(
+                        groupBy: 'subjectName',
+                        into: 'groups',
+                        mappings: [
+                                subjectName: 'name'
+                        ]
+                ),
+                new GroupCondition(
+                        groupBy: 'groupName',
+                        into: 'universities',
+                        mappings: [
+                                groupName: 'name'
+                        ]
+                ),
+                new GroupCondition(
+                        groupBy: 'universityEn',
+                        into: 'grades',
+                        mappings: [
+                                universityEn: 'name'
+                        ]
+                ),
+        ]
+        return CollectionUtils.groupBy(list, conditions)
     }
 }
