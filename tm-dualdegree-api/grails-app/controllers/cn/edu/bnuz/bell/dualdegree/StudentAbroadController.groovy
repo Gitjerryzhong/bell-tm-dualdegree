@@ -12,7 +12,7 @@ class StudentAbroadController {
     def index() {
         StudentOptionsCommand optionsCommand = new StudentOptionsCommand(
                 sujectId:  params['subjectId'],
-                groupId:  params.getInt('groupId') ?: 0,
+                regionId:  params.getInt('regionId') ?: 0,
                 grade:  params.getInt('grade') ?: 0,
                 studentId:  params['studentId'],
                 studentName:  params['studentName']
@@ -41,7 +41,7 @@ class StudentAbroadController {
                 form: [],
                 subjects: studentAbroadService.subjects,
                 grades: studentAbroadService.grades,
-                agreementGroups: studentAbroadService.agreementGroups
+                agreementRegions: studentAbroadService.agreementRegions
         ])
     }
 

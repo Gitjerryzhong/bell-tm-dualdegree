@@ -1,9 +1,9 @@
 package cn.edu.bnuz.bell.dualdegree
 
-import grails.testing.gorm.DomainUnitTest
+import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
-class AgreementGroupSpec extends Specification implements DomainUnitTest<AgreementGroup> {
+class DualDegreeAwardServiceSpec extends Specification implements ServiceUnitTest<DualDegreeAwardService>{
 
     def setup() {
     }

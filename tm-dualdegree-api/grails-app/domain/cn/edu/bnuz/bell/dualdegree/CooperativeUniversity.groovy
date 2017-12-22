@@ -3,13 +3,13 @@ package cn.edu.bnuz.bell.dualdegree
 import cn.edu.bnuz.bell.organization.Department
 
 /**
- * 只适用于15级以前
+ * 合作大学列表
  */
 class CooperativeUniversity {
     String name
     Department department
     static mapping = {
-        comment '合作大学列表'
+        comment '合作大学列表：只适用于15级以前'
         table 'dual_degree_cooperative_university'
         id generator: 'identity', comment: '无意义ID'
         name comment: '可管理部门'

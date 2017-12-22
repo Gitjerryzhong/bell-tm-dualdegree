@@ -3,7 +3,10 @@ package cn.edu.bnuz.bell.dualdegree
 import cn.edu.bnuz.bell.organization.Department
 import cn.edu.bnuz.bell.organization.Teacher
 
-class DeptAdmin {
+/**
+ * 学院管理员
+ */
+class DeptAdministrator {
     Department department
     Teacher teacher
 

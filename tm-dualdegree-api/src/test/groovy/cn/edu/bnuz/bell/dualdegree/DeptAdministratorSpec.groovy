@@ -1,9 +1,9 @@
 package cn.edu.bnuz.bell.dualdegree
 
-import grails.testing.web.controllers.ControllerUnitTest
+import grails.testing.gorm.DomainUnitTest
 import spock.lang.Specification
 
-class AgreementViewControllerSpec extends Specification implements ControllerUnitTest<AgreementViewController> {
+class DeptAdministratorSpec extends Specification implements DomainUnitTest<DeptAdministrator> {
 
     def setup() {
     }

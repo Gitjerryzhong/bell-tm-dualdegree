@@ -5,19 +5,13 @@ class AgreementCommand {
 
     Long          id
     String        agreementName
-    Integer       group
+    Integer       regionId
     String        universityEn
     String        universityCn
     String        memo
 
     List<Item>      addedItems
     List<Integer>   removedItems
-
-    def checkValue() {
-        removedItems.each{
-            println "here: ${it}"
-        }
-    }
 
     class Item {
         /**

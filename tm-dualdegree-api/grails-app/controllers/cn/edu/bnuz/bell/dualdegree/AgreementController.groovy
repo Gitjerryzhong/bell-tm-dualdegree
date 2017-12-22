@@ -5,7 +5,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 /**
  * 协议管理
  */
-@PreAuthorize('hasAuthority("PERM_AGREEMENT_WRITE")')
+@PreAuthorize('hasAuthority("PERM_DUALDEGREE_AGREEMENT_WRITE")')
 class AgreementController {
 	AgreementService agreementService
 
@@ -19,7 +19,7 @@ class AgreementController {
     def edit(Long id) {
         renderJson([
                 form: agreementService.getFormForEdit(id),
-                groups: agreementService.groups,
+                regions: agreementService.regions,
                 majors: agreementService.majors])
     }
 
@@ -56,7 +56,7 @@ class AgreementController {
                 form: [
                         items: [],
                 ],
-                groups: agreementService.groups,
+                regions: agreementService.regions,
                 majors: agreementService.majors
         ])
     }

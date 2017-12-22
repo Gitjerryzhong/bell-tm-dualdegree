@@ -3,7 +3,7 @@ package cn.edu.bnuz.bell.dualdegree
 
 class StudentAbroadCommand {
     String id
-    Long groupId
+    Long regionId
     /**
      * 学号列表：以回车符分割
      */

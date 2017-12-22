@@ -1,5 +1,6 @@
 package cn.edu.bnuz.bell.dualdegree
 
+import cn.edu.bnuz.bell.dualdegree.eto.StudentAbroadEto
 import cn.edu.bnuz.bell.master.Major
 import cn.edu.bnuz.bell.organization.Teacher
 import cn.edu.bnuz.bell.security.SecurityService
@@ -17,8 +18,8 @@ class StudentAbroadService {
         def result = StudentAbroad.executeQuery'''
 select new map(
 sa.id as id,
-g.name as groupName,
-g.id as groupId,
+g.name as regionName,
+g.id as regionId,
 st.id as studentId,
 st.name as studentName,
 st.sex as sex,
@@ -31,7 +32,7 @@ ac.name as adminClassName
 )
 from StudentAbroad sa 
 join sa.student st 
-join sa.agreementGroup g
+join sa.agreementRegion g
 join st.department d 
 join st.major mj 
 join mj.subject sj 
@@ -40,10 +41,10 @@ where d.id in (:departments) and sa.enabled is true
 ''',[departments: studentValidateService.deptAdmins]
         return result.grep{
             (cmd.sujectId ? cmd.sujectId == it.subjectId : true) &&
-                    (cmd.grade ? cmd.grade == it.grade : true) &&
-                    (cmd.groupId ? cmd.groupId == it.groupId : true) &&
-                    (cmd.studentName ? cmd.studentName == it.studentName : true) &&
-                    (cmd.studentId ? cmd.studentId == it.studentId : true)
+            (cmd.grade ? cmd.grade == it.grade : true) &&
+            (cmd.regionId ? cmd.regionId == it.regionId : true) &&
+            (cmd.studentName ? cmd.studentName == it.studentName : true) &&
+            (cmd.studentId ? cmd.studentId == it.studentId : true)
         }
     }
 
@@ -56,19 +57,19 @@ where d.id in (:departments) and sa.enabled is true
             return validate.error
         }
         def students = validate.students
-        def studentsPrint = validate.studentsPrint
+        def studentsEto = validate.studentsEto
         def me = Teacher.load(securityService.userId)
-        def group = AgreementGroup.load(cmd.groupId)
+        def region = AgreementRegion.load(cmd.regionId)
         StudentAbroad.executeUpdate'''
-    insert into StudentAbroad (student, operator, addedDate, agreementGroup, enabled)
-    select st, :user, now(), :agreementGroup, true from Student st where st.id in (:ids) 
-''',[user: me, agreementGroup: group, ids: students]
+    insert into StudentAbroad (student, operator, dateCreated, agreementRegion, enabled)
+    select st, :user, now(), :agreementRegion, true from Student st where st.id in (:ids) 
+''',[user: me, agreementRegion: region, ids: students]
 //      写入自助打印系统
-        if (studentsPrint && studentsPrint.size()) {
-            StudentPrint.executeUpdate'''
-    insert into StudentPrint (studentId, studentName, dateAdded, operatorAdded, inProject, type)
-    select st.id, st.name, now(), :userId, 1, :agreementGroup from Student st where st.id in (:ids) 
-''',[userId: me.id, agreementGroup: group.name, ids: studentsPrint]
+        if (studentsEto && studentsEto.size()) {
+            StudentAbroadEto.executeUpdate'''
+    insert into StudentAbroadEto (studentId, studentName, dateCreated, creator, enabled, region)
+    select st.id, st.name, now(), :userId, true, :agreementRegion from Student st where st.id in (:ids) 
+''',[userId: me.id, agreementRegion: region.name, ids: studentsEto]
         }
         return null
     }
@@ -85,10 +86,10 @@ where d.id in (:departments) and sa.enabled is true
         }
     }
 
-    def getAgreementGroups() {
-        AgreementGroup.executeQuery'''
+    def getAgreementRegions() {
+        AgreementRegion.executeQuery'''
 select new map(g.id as id, g.name as name) 
-from AgreementGroup g
+from AgreementRegion g
 '''
     }
 

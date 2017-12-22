@@ -1,5 +1,8 @@
 package cn.edu.bnuz.bell.dualdegree
 
+/**
+ * 协议
+ */
 class Agreement {
     /**
      * 协议名称
@@ -9,7 +12,7 @@ class Agreement {
     /**
      * 项目分类 由前台定义好map
      */
-    AgreementGroup  group
+    AgreementRegion region
 
     /**
      * 国外大学名称（英文）
@@ -27,9 +30,9 @@ class Agreement {
     String          memo
 
     /**
-     * 协议明细
+     * 协议专业
      */
-    static hasMany = [item: AgreementItem]
+    static hasMany = [item: AgreementMajor]
 
     static mapping = {
         comment                 '协议'
@@ -37,7 +40,7 @@ class Agreement {
         id                      generator: 'identity', comment: '协议ID'
         name                    length: 500, comment: '协议名称'
         memo                    length: 1000,comment: '备注'
-        group                   comment: '项目分类'
+        region                  comment: '协议按地区分类'
         universityEn            length: 200, comment: '国外大学英文名'
         universityCn            length: 100, comment: '国外大学英文名'
     }

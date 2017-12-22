@@ -1,10 +1,9 @@
 package cn.edu.bnuz.bell.dualdegree
 
-import cn.edu.bnuz.bell.dualdegree.eto.MajorRegionEto
-import grails.testing.gorm.DomainUnitTest
+import grails.testing.web.controllers.ControllerUnitTest
 import spock.lang.Specification
 
-class GroupPrintSpec extends Specification implements DomainUnitTest<MajorRegionEto> {
+class DualDegreeAwardControllerSpec extends Specification implements ControllerUnitTest<DualDegreeAwardController> {
 
     def setup() {
     }

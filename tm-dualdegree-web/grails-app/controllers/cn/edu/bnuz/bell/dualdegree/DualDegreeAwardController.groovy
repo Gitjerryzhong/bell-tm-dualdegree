@@ -2,8 +2,8 @@ package cn.edu.bnuz.bell.dualdegree
 
 import org.springframework.security.access.prepost.PreAuthorize
 
-@PreAuthorize('hasAuthority("PERM_DUALDEGREE_AGREEMENT_WRITE")')
-class AgreementFormController {
+@PreAuthorize('hasRole("ROLE_DUALDEGREE_ADMIN_DEPT")')
+class DualDegreeAwardController {
 
     def index() { }
 }

@@ -1,5 +1,6 @@
 package cn.edu.bnuz.bell.dualdegree
 
+import cn.edu.bnuz.bell.dualdegree.eto.StudentAbroadEto
 import cn.edu.bnuz.bell.organization.Student
 import cn.edu.bnuz.bell.security.SecurityService
 import grails.gorm.transactions.Transactional
@@ -29,26 +30,26 @@ class StudentValidateService {
         }
 
 //      检查学生参加的项目是否有协议支持
-        def groupMatchIds = groupMatch(ids, cmd.groupId)
-        if (ids.length != groupMatchIds.size()) {
-            def ids_invalid = (ids as String[]) - groupMatchIds
-            error.add("${messageSource.getMessage('error.group_check_failed', null, Locale.CHINA)}: ${ids_invalid.toArrayString()}")
+        def regionMatchIds = regionMatch(ids, cmd.regionId)
+        if (ids.length != regionMatchIds.size()) {
+            def ids_invalid = (ids as String[]) - regionMatchIds
+            error.add("${messageSource.getMessage('error.region_check_failed', null, Locale.CHINA)}: ${ids_invalid.toArrayString()}")
             return [error: error]
         }
 
 //      去除已经导入成绩自助打印系统的学生
-        def duplicatesInPrint = hasDuplicatesInPrint(ids)
-        def studentsInPrint = students
-        if (duplicatesInPrint) {
-            studentsInPrint = students.grep{
-                !(it in duplicatesInPrint)
+        def duplicatesInStudentEto = hasDuplicatesInStudentEto(ids)
+        def studentsEto = students
+        if (duplicatesInStudentEto) {
+            studentsEto = students.grep{
+                !(it in duplicatesInStudentEto)
             }
         }
-        return [error: null, students: students, studentsPrint: studentsInPrint]
+        return [error: null, students: students, studentsEto: studentsEto]
     }
     def getDeptAdmins() {
-        DeptAdmin.executeQuery'''
-select d.id from DeptAdmin da join da.department d 
+        DeptAdministrator.executeQuery'''
+select d.id from DeptAdministrator da join da.department d 
 where da.teacher.id = :userId
 ''',[userId: securityService.userId]
     }
@@ -69,18 +70,18 @@ where st.student.id in (:ids)
 ''',[ids: ids]
     }
 
-    def groupMatch(String[] ids, Long groupId) {
+    def regionMatch(String[] ids, Long regionId) {
         Student.executeQuery'''
 select distinct st.id
 from Student st, Agreement agreement join agreement.item item 
-where st.id in (:ids) and st.major.id = item.major.id and agreement.group.id = :groupId
-''',[ids: ids, groupId: groupId]
+where st.id in (:ids) and st.major.id = item.major.id and agreement.region.id = :regionId
+''',[ids: ids, regionId: regionId]
     }
 
-    def hasDuplicatesInPrint(String[] ids) {
-        StudentPrint.executeQuery'''
+    def hasDuplicatesInStudentEto(String[] ids) {
+        StudentAbroadEto.executeQuery'''
 select st.studentId
-from StudentPrint st 
+from StudentAbroadEto st 
 where st.studentId in (:ids)
 ''',[ids: ids]
     }

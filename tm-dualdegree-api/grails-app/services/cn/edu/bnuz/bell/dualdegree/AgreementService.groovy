@@ -1,5 +1,6 @@
 package cn.edu.bnuz.bell.dualdegree
 
+import cn.edu.bnuz.bell.dualdegree.eto.MajorRegionEto
 import cn.edu.bnuz.bell.master.Major
 import cn.edu.bnuz.bell.security.SecurityService
 import cn.edu.bnuz.bell.security.UserLogService
@@ -21,12 +22,12 @@ class AgreementService {
 select new map(
     agreement.id                as      id,
     agreement.name              as      name,
-    gr.name                     as      groupName,
+    gr.name                     as      regionName,
     agreement.universityEn      as      universityEn,
     agreement.universityCn      as      universityCn,
     agreement.memo              as      memo
 )
-from Agreement agreement join agreement.group gr
+from Agreement agreement join agreement.region gr
 order by agreement.id
 '''
     }
@@ -37,35 +38,38 @@ order by agreement.id
     def create(AgreementCommand cmd) {
         Agreement form = new Agreement(
                 name:               cmd.agreementName,
-                group:              AgreementGroup.load(cmd.group),
+                region:             AgreementRegion.load(cmd.regionId),
                 universityCn:       cmd.universityCn,
                 universityEn:       cmd.universityEn,
                 memo:               cmd.memo
         )
         cmd.addedItems.each { item ->
-            form.addToItem(new AgreementItem(
+            form.addToItem(new AgreementMajor(
                     major: Major.load(item.id),
                     majorOptions: item.majorOptions
             ))
 
 //          添加到自助打印系统中
-            def groupPrint = new GroupPrint(id: item.id, name: form.group.name)
-            groupPrint.save()
+            def majorRegionEto = new MajorRegionEto(majorId: item.id, region: form.region.name)
+            def check = MajorRegionEto.get(majorRegionEto)
+            if (!check) {
+                majorRegionEto.save()
+            }
         }
         form.save()
         return form
     }
 
     /**
-     * 项目列表
+     * 区域列表
      */
-    def getGroups() {
-        AgreementGroup.executeQuery'''
+    def getRegions() {
+        AgreementRegion.executeQuery'''
 select new map(
     gr.id   as id,
     gr.name as name
 )
-from AgreementGroup gr
+from AgreementRegion gr
 '''
     }
 
@@ -95,17 +99,17 @@ order by department.name, subject.name, major.grade
 select new map(
     agreement.id                as      id,
     agreement.name              as      agreementName,
-    gr.id                       as      group,
+    gr.id                       as      regionId,
     agreement.universityEn      as      universityEn,
     agreement.universityCn      as      universityCn,
     agreement.memo              as      memo
 )
-from Agreement agreement join agreement.group gr
+from Agreement agreement join agreement.region gr
 where agreement.id = :id
 ''',[id: id]
         if (result) {
             def form = result[0]
-            form['items'] = findAgreementItems(id)
+            form['items'] = findAgreementMajors(id)
             return form
         } else {
             return []
@@ -120,17 +124,17 @@ where agreement.id = :id
 select new map(
     agreement.id                as      id,
     agreement.name              as      agreementName,
-    gr.name                     as      groupName,
+    gr.name                     as      regionName,
     agreement.universityEn      as      universityEn,
     agreement.universityCn      as      universityCn,
     agreement.memo              as      memo
 )
-from Agreement agreement join agreement.group gr
+from Agreement agreement join agreement.region gr
 where agreement.id = :id
 ''',[id: id]
         if (result) {
             def form = result[0]
-            def items = findAgreementItems(id)
+            def items = findAgreementMajors(id)
             List<GroupCondition> conditions = [
                     new GroupCondition(
                             groupBy: 'departmentId',
@@ -171,29 +175,29 @@ where agreement.id = :id
             form.name = cmd.agreementName
             form.universityCn = cmd.universityCn
             form.universityEn = cmd.universityEn
-            form.group = AgreementGroup.load(cmd.group)
+            form.region = AgreementRegion.load(cmd.regionId)
             form.memo = cmd.memo
 
             cmd.addedItems.each { item ->
                 def major = Major.load(item.id)
-                def agreementItem = AgreementItem.get(new AgreementItem(agreement: form, major: major))
+                def agreementItem = AgreementMajor.get(new AgreementMajor(agreement: form, major: major))
                 if (!agreementItem) {
-                    form.addToItem(new AgreementItem(
+                    form.addToItem(new AgreementMajor(
                             major: major,
                             majorOptions: item.majorOptions
                     ))
                 }
 
 //              添加到自助打印系统中
-                def groupPrint = new GroupPrint(majorId: item.id, name: form.group.name)
-                def check = GroupPrint.get(groupPrint)
+                def majorRegionEto = new MajorRegionEto(majorId: item.id, region: form.region.name)
+                def check = MajorRegionEto.get(majorRegionEto)
                 if (!check) {
-                    groupPrint.save()
+                    majorRegionEto.save()
                 }
             }
 
             cmd.removedItems.each {
-                def agreementItem = AgreementItem.load(new AgreementItem(agreement: form, major: Major.load(it)))
+                def agreementItem = AgreementMajor.load(new AgreementMajor(agreement: form, major: Major.load(it)))
                 userLogService.log(securityService.userId,securityService.ipAddress,"DELETE", agreementItem,"${agreementItem as JSON}")
                 form.removeFromItem(agreementItem)
                 agreementItem.delete()
@@ -203,8 +207,8 @@ where agreement.id = :id
         }
     }
 
-    private findAgreementItems(Long agreementId) {
-        AgreementItem.executeQuery'''
+    private findAgreementMajors(Long agreementId) {
+        AgreementMajor.executeQuery'''
 select new map(
     major.id            as id,
     item.majorOptions   as majorOptions,
@@ -213,7 +217,7 @@ select new map(
     department.id       as departmentId,
     department.name     as departmentName
 )
-from AgreementItem item join item.major major join major.subject subject join major.department department
+from AgreementMajor item join item.major major join major.subject subject join major.department department
 where item.agreement.id = :id
 order by department.name, subject.name, major.grade, item.majorOptions
 ''',[id: agreementId]
@@ -223,37 +227,37 @@ order by department.name, subject.name, major.grade, item.majorOptions
      * 特定学院相关协议
      */
     def findAgreementsByDepartment(String departmentId) {
-        def list = AgreementItem.executeQuery'''
+        def list = AgreementMajor.executeQuery'''
 select new map(
     major.id                    as id,
     item.majorOptions           as majorOptions,
     major.grade                 as grade,
     subject.name                as subjectName,
-    gr.name                     as groupName,
+    gr.name                     as regionName,
     agreement.universityEn      as      universityEn,
     agreement.universityCn      as      universityCn
 )
-from AgreementItem item join item.major major 
+from AgreementMajor item join item.major major 
 join major.subject subject 
 join major.department department
 join item.agreement agreement
-join agreement.group gr
+join agreement.region gr
 where department.id = :id
 order by subject.name, gr.name, agreement.universityEn, major.grade, item.majorOptions
 ''',[id: departmentId]
         List<GroupCondition> conditions = [
                 new GroupCondition(
                         groupBy: 'subjectName',
-                        into: 'groups',
+                        into: 'regions',
                         mappings: [
                                 subjectName: 'name'
                         ]
                 ),
                 new GroupCondition(
-                        groupBy: 'groupName',
+                        groupBy: 'regionName',
                         into: 'universities',
                         mappings: [
-                                groupName: 'name'
+                                regionName: 'name'
                         ]
                 ),
                 new GroupCondition(

@@ -5,9 +5,10 @@ class UrlMappings {
     static mappings = {
 
         "/agreements"(resources: 'agreement')
-        "/agreement-views"(resources: 'agreementView', includes: ['index'])
+        "/agreement-public-depts"(resources: 'agreementPublicDept', includes: ['index'])
         "/settings"(resources: 'setting')
         "/students"(resources: 'studentAbroad')
+        "/awards"(resources: 'dualDegreeAward')
 
         "500"(view: '/error')
         "404"(view: '/notFound')

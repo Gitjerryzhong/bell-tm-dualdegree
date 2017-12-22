@@ -16,7 +16,7 @@ class SettingController {
      * 保存数据
      */
     def save() {
-        def cmd = new DeptAdminCommand()
+        def cmd = new DeptAdministratorCommand()
         bindData(cmd, request.JSON)
         def form = settingService.create(cmd)
         renderJson([id: form.id])
