@@ -1,10 +1,10 @@
 <html>
 <head>
     <meta name="layout" content="main"/>
-    <title>中外合作协议</title>
-    <asset:script src="/static/js/app/dualdegree/agreement/public.js"></asset:script>
+    <title>启动双学位申请审核工作</title>
+    <asset:script src="/static/js/app/dualdegree/dept-admin/award.js"></asset:script>
 </head>
 <body>
-<public-list></public-list>
+<award-view></award-view>
 </body>
 </html>

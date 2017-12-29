@@ -6,7 +6,7 @@ class UrlMappings {
 
         "/agreements"(resources: 'agreementForm', includes: ['index'])
         "/agreement-public-depts"(resources: 'agreementPublicDept', includes: ['index'])
-
+        "/agreement-publics"(resources: 'agreementPublic', includes: ['index'])
         "/settings"(resources: 'setting', includes: ['index'])
 
         "/studentAbroads"(resources: 'studentAbroadAdmin', includes: ['index'])

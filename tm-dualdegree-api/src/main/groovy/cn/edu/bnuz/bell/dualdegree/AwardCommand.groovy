@@ -1,8 +1,7 @@
 package cn.edu.bnuz.bell.dualdegree
 
-import org.grails.datastore.mapping.query.Query
-
-import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class AwardCommand {
     Long   id
@@ -14,10 +13,10 @@ class AwardCommand {
     String approvalEnd
     String departmentId
 
-    Date toDate(String dateStr) {
-        SimpleDateFormat spdf = new SimpleDateFormat("yyyy-MM-dd");
+    LocalDate toDate(String dateStr) {
+        DateTimeFormatter spdf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         if(dateStr!=null){
-            Date date=spdf.parse(dateStr)
+            LocalDate date=LocalDate.parse(dateStr, spdf)
             return date
         }else{
             return null

@@ -19,4 +19,39 @@ class DualDegreeAwardController {
         def form = dualDegreeAwardService.create(cmd)
         renderJson([id: form.id])
     }
+
+    /**
+     * 编辑数据
+     */
+    def edit(Long id) {
+        renderJson([
+                form: dualDegreeAwardService.getFormForShow(id),
+                departments: dualDegreeAwardService.myDepartments
+        ])
+    }
+
+    def show(Long id) {
+        renderJson(dualDegreeAwardService.getFormForShow(id))
+    }
+
+    /**
+     * 创建
+     */
+    def create() {
+        renderJson([
+                form: [ ],
+                departments: dualDegreeAwardService.myDepartments
+        ])
+    }
+
+    /**
+     * 更新数据
+     */
+    def update(Long id) {
+        def cmd = new AwardCommand()
+        bindData(cmd, request.JSON)
+        cmd.id = id
+        dualDegreeAwardService.update(cmd)
+        renderOk()
+    }
 }
