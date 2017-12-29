@@ -3,7 +3,7 @@ package cn.edu.bnuz.bell.dualdegree
 import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
-class DualDegreeAwardServiceSpec extends Specification implements ServiceUnitTest<DualDegreeAwardService>{
+class AwardServiceSpec extends Specification implements ServiceUnitTest<DualDegreeAwardService>{
 
     def setup() {
     }

@@ -11,7 +11,7 @@ class DualDegreeAwardService {
     SecurityService securityService
 
     def list() {
-        DualDegreeAward.executeQuery'''
+        Award.executeQuery'''
 select new map(
     ba.id   as id,
     ba.title   as title,
@@ -23,7 +23,7 @@ select new map(
     ba.dateCreated as dateCreated,
     ba.department.name as departmentName
 )
-from DualDegreeAward ba, DeptAdministrator da join da.teacher t
+from Award ba, DepartmentAdministrator da join da.teacher t
 where ba.department = da.department and da.teacher.id = :userId
 order by ba.dateCreated desc
 ''', [userId: securityService.userId]
@@ -33,7 +33,7 @@ order by ba.dateCreated desc
      * 保存
      */
     def create(AwardCommand cmd) {
-        DualDegreeAward form = new DualDegreeAward(
+        Award form = new Award(
                 title: cmd.title,
                 content: cmd.content,
                 requestBegin: cmd.requestBeginToDate,
@@ -53,12 +53,12 @@ order by ba.dateCreated desc
      * 所管理的学院
      */
     def getMyDepartments () {
-        DeptAdministrator.executeQuery'''
+        DepartmentAdministrator.executeQuery'''
 select new map(
     d.id as id,
     d.name as name
 )
-from DeptAdministrator da join da.department d 
+from DepartmentAdministrator da join da.department d 
 where da.teacher.id = :userId
 ''',[userId: securityService.userId]
     }
@@ -67,7 +67,7 @@ where da.teacher.id = :userId
      * 查看详情
      */
     def getFormForShow(Long id) {
-        def results =DualDegreeAward.executeQuery '''
+        def results =Award.executeQuery '''
 select new map(
     award.id           as      id,
     award.title        as      title,
@@ -80,7 +80,7 @@ select new map(
     d.name             as      departmentName
     
 )
-from DualDegreeAward award join award.department d
+from Award award join award.department d
 where award.id = :id
 ''',[id: id]
         if(!results) {
@@ -93,7 +93,7 @@ where award.id = :id
      * 更新
      */
     def update(AwardCommand cmd) {
-        DualDegreeAward form = DualDegreeAward.load(cmd.id)
+        Award form = Award.load(cmd.id)
         if (form) {
             form.title = cmd.title
             form.content = cmd.content

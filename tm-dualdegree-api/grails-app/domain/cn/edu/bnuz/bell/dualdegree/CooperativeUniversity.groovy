@@ -10,7 +10,6 @@ class CooperativeUniversity {
     Department department
     static mapping = {
         comment '合作大学列表：只适用于15级以前'
-        table 'dual_degree_cooperative_university'
         id generator: 'identity', comment: '无意义ID'
         name comment: '可管理部门'
         department comment: '关联本校部门'

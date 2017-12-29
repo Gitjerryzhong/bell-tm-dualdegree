@@ -11,7 +11,7 @@ class SettingService {
      * 管理员列表
      */
     def list() {
-        DeptAdministrator.executeQuery'''
+        DepartmentAdministrator.executeQuery'''
 select new map(
 da.id as id,
 d.id as departmentId,
@@ -19,7 +19,7 @@ d.name as departmentName,
 t.id as teacherId,
 t.name as teacherName
 )
-from DeptAdministrator da join da.department d join da.teacher t
+from DepartmentAdministrator da join da.department d join da.teacher t
 order by d.name
 '''
     }
@@ -28,7 +28,7 @@ order by d.name
      * 保存管理员设置
      */
     def create(DeptAdministratorCommand cmd) {
-        DeptAdministrator form = new DeptAdministrator(
+        DepartmentAdministrator form = new DepartmentAdministrator(
                 department:         Department.load(cmd.departmentId),
                 teacher:            Teacher.load(cmd.teacherId)
         )
@@ -43,7 +43,7 @@ order by d.name
      * @return
      */
     def delete(Long id) {
-        def form = DeptAdministrator.get(id)
+        def form = DepartmentAdministrator.get(id)
         if (form) {
             form.delete()
         }

@@ -23,7 +23,6 @@ class AgreementMajor implements Serializable {
 
     static mapping = {
         comment                 '协议适用年级专业'
-        table                   'dual_degree_agreement_major'
         id                      composite: ['agreement', 'major']
     }
 }

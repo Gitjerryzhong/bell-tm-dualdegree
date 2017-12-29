@@ -3,7 +3,7 @@ package cn.edu.bnuz.bell.dualdegree
 import grails.testing.gorm.DomainUnitTest
 import spock.lang.Specification
 
-class DeptAdministratorSpec extends Specification implements DomainUnitTest<DeptAdministrator> {
+class AwardSpec extends Specification implements DomainUnitTest<Award> {
 
     def setup() {
     }

@@ -73,7 +73,7 @@ hibernate:
         queries: false
         use_second_level_cache: false
         use_query_cache: false
-    default_schema: tm
+    default_schema: tm_dual
     hbm2ddl:
         schema_filter_provider: cn.edu.bnuz.bell.orm.BellSchemaFilterProvider
 
@@ -136,6 +136,7 @@ bell:
         ignored:
             schemas:
                 - ea
+                - tm
             prefixes:
                 - dv
                 - et

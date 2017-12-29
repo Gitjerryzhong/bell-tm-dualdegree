@@ -8,7 +8,7 @@ import java.time.LocalDate
 /**
  * 双学位授予工作
  */
-class DualDegreeAward {
+class Award {
     String      title
     String      content
     LocalDate   requestBegin

@@ -36,7 +36,6 @@ class Agreement {
 
     static mapping = {
         comment                 '协议'
-        table                   'dual_degree_agreement'
         id                      generator: 'identity', comment: '协议ID'
         name                    length: 500, comment: '协议名称'
         memo                    length: 1000,comment: '备注'

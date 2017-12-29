@@ -48,8 +48,8 @@ class StudentValidateService {
         return [error: null, students: students, studentsEto: studentsEto]
     }
     def getDeptAdmins() {
-        DeptAdministrator.executeQuery'''
-select d.id from DeptAdministrator da join da.department d 
+        DepartmentAdministrator.executeQuery'''
+select d.id from DepartmentAdministrator da join da.department d 
 where da.teacher.id = :userId
 ''',[userId: securityService.userId]
     }
