@@ -8,7 +8,6 @@ import grails.gorm.transactions.Transactional
 @Transactional
 class StudentValidateService {
     SecurityService securityService
-    def messageSource
 
     def validate(StudentAbroadCommand cmd) {
         def error = new ArrayList<String>()
@@ -18,14 +17,14 @@ class StudentValidateService {
 //      检查是否存在越权导入
         if (ids.length != students.size()) {
             def ids_invalid = (ids as String[]) - students
-            error.add("${messageSource.getMessage('error.department_check_failed', null, Locale.CHINA)}: ${ids_invalid.toArrayString()}")
+            error.add("非本学院或非2+2专业学生: ${ids_invalid.toArrayString()}")
             return [error: error]
         }
 
 //      检查是否存在重复导入
         def duplicates = hasDuplicates(ids)
         if (duplicates) {
-            error.add("${messageSource.getMessage('error.exist_duplicates', null, Locale.CHINA)}: ${duplicates.toListString()}")
+            error.add("重复导入: ${duplicates.toListString()}")
             return [error: error]
         }
 
@@ -33,7 +32,7 @@ class StudentValidateService {
         def regionMatchIds = regionMatch(ids, cmd.regionId)
         if (ids.length != regionMatchIds.size()) {
             def ids_invalid = (ids as String[]) - regionMatchIds
-            error.add("${messageSource.getMessage('error.region_check_failed', null, Locale.CHINA)}: ${ids_invalid.toArrayString()}")
+            error.add("学生所在专业不能参加所选项目: ${ids_invalid.toArrayString()}")
             return [error: error]
         }
 

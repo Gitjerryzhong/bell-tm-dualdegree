@@ -7,7 +7,7 @@ import cn.edu.bnuz.bell.security.SecurityService
 import grails.gorm.transactions.Transactional
 
 @Transactional
-class DualDegreeAwardService {
+class AwardService {
     SecurityService securityService
 
     def list() {
@@ -27,6 +27,25 @@ from Award ba, DepartmentAdministrator da join da.teacher t
 where ba.department = da.department and da.teacher.id = :userId
 order by ba.dateCreated desc
 ''', [userId: securityService.userId]
+    }
+
+    def list(String studentId) {
+        Award.executeQuery'''
+select new map(
+    ba.id   as id,
+    ba.title   as title,
+    ba.requestBegin as requestBegin,
+    ba.requestEnd as requestEnd,
+    ba.paperEnd as paperEnd,
+    ba.approvalEnd as approvalEnd,
+    ba.creator as creator,
+    ba.dateCreated as dateCreated,
+    ba.department.name as departmentName
+)
+from Award ba, Student st
+where ba.department = st.department and st.id = :userId
+order by ba.dateCreated desc
+''', [userId: studentId]
     }
 
     /**
@@ -105,5 +124,9 @@ where award.id = :id
             form.save(flush: true)
             return form
         }
+    }
+
+    def getMessage() {
+        return [title: '英国留学项目']
     }
 }

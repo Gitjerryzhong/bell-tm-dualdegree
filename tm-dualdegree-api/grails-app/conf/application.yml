@@ -42,19 +42,19 @@ grails:
                         - Trident
         types:
             json:
-              - application/json
+              - applicationForm/json
               - text/json   
             hal:
-              - application/hal+json
-              - application/hal+xml  
+              - applicationForm/hal+json
+              - applicationForm/hal+xml
             xml:
               - text/xml
-              - application/xml                                 
-            atom: application/atom+xml
+              - applicationForm/xml
+            atom: applicationForm/atom+xml
             css: text/css
             csv: text/csv
             js: text/javascript
-            rss: application/rss+xml
+            rss: applicationForm/rss+xml
             text: text/plain
             all: '*/*'            
     urlmapping:
@@ -73,7 +73,7 @@ hibernate:
         queries: false
         use_second_level_cache: false
         use_query_cache: false
-    default_schema: tm_dual
+    default_schema: tm
     hbm2ddl:
         schema_filter_provider: cn.edu.bnuz.bell.orm.BellSchemaFilterProvider
 

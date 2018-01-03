@@ -21,6 +21,7 @@ class Award {
 
     static mapping = {
         comment                 '双学位授予工作'
+        table                   schema: 'tm_dual'
         id                      generator: 'identity', comment: '工作ID'
         title                   length: 100, comment: '标题'
         content                 length: 1000,comment: '内容'

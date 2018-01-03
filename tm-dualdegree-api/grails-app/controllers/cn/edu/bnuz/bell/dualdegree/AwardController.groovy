@@ -3,11 +3,11 @@ package cn.edu.bnuz.bell.dualdegree
 import org.springframework.security.access.prepost.PreAuthorize
 
 @PreAuthorize('hasRole("ROLE_DUALDEGREE_ADMIN_DEPT")')
-class DualDegreeAwardController {
-    DualDegreeAwardService dualDegreeAwardService
+class AwardController {
+    AwardService awardService
 
     def index() {
-        renderJson(dualDegreeAwardService.list())
+        renderJson(awardService.list())
     }
 
     /**
@@ -16,7 +16,7 @@ class DualDegreeAwardController {
     def save() {
         def cmd = new AwardCommand()
         bindData(cmd, request.JSON)
-        def form = dualDegreeAwardService.create(cmd)
+        def form = awardService.create(cmd)
         renderJson([id: form.id])
     }
 
@@ -25,22 +25,23 @@ class DualDegreeAwardController {
      */
     def edit(Long id) {
         renderJson([
-                form: dualDegreeAwardService.getFormForShow(id),
-                departments: dualDegreeAwardService.myDepartments
+                form: awardService.getFormForShow(id),
+                departments: awardService.myDepartments
         ])
     }
 
     def show(Long id) {
-        renderJson(dualDegreeAwardService.getFormForShow(id))
+        renderJson(awardService.getFormForShow(id))
     }
 
     /**
      * 创建
      */
     def create() {
+        println awardService.message.title
         renderJson([
                 form: [ ],
-                departments: dualDegreeAwardService.myDepartments
+                departments: awardService.myDepartments
         ])
     }
 
@@ -51,7 +52,7 @@ class DualDegreeAwardController {
         def cmd = new AwardCommand()
         bindData(cmd, request.JSON)
         cmd.id = id
-        dualDegreeAwardService.update(cmd)
+        awardService.update(cmd)
         renderOk()
     }
 }

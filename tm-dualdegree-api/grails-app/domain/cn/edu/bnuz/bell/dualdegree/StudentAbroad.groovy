@@ -15,6 +15,7 @@ class StudentAbroad {
 
     static mapping = {
         comment '出国学生'
+        table            schema: 'tm_dual'
         id generator: 'identity', comment: '无意义ID'
         student          comment: '学生'
         operator         comment: '导入操作的老师'

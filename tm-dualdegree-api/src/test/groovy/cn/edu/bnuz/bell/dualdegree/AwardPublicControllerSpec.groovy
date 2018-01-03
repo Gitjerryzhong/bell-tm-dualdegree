@@ -3,7 +3,7 @@ package cn.edu.bnuz.bell.dualdegree
 import grails.testing.web.controllers.ControllerUnitTest
 import spock.lang.Specification
 
-class StudentAbroadAdminControllerSpec extends Specification implements ControllerUnitTest<StudentAbroadAdminController> {
+class AwardPublicControllerSpec extends Specification implements ControllerUnitTest<AwardPublicController> {
 
     def setup() {
     }
@@ -13,6 +13,6 @@ class StudentAbroadAdminControllerSpec extends Specification implements Controll
 
     void "test something"() {
         expect:"fix me"
-            true == false
+        true == false
     }
 }
