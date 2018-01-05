@@ -8,6 +8,6 @@ menuGroup 'main', {
         agreementPublic     60, 'PERM_DUALDEGREE_AGREEMENT_READ', '/web/dualdegree/agreement-publics'
     }
     dualDegree 61,{
-        application     10, 'PERM_DUALDEGREE_WRITE', '/web/dualdegree/students/${userId}/degree-applications'
+        application     10, 'PERM_DUALDEGREE_WRITE', '/web/dualdegree/students/${userId}/awards'
     }
 }

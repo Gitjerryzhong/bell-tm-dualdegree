@@ -85,7 +85,7 @@ where da.teacher.id = :userId
     /**
      * 查看详情
      */
-    def getFormForShow(Long id) {
+    Map getFormForShow(Long id) {
         def results =Award.executeQuery '''
 select new map(
     award.id           as      id,

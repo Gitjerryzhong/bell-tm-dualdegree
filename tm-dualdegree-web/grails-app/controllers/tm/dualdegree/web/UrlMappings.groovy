@@ -14,8 +14,8 @@ class UrlMappings {
             "/agreements"(resources: 'agreementPublicDept', includes: ['index'])
         }
 
-        "/students"(resource: 'student', includes: []) {
-            "/degree-applications"(resource: 'applicationForm')
+        "/students"(resources: 'student', includes: []) {
+            "/awards"(resources: 'applicationForm', includes: ['index'])
         }
 
         "/"(view:"/index")

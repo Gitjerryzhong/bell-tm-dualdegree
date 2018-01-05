@@ -14,8 +14,10 @@ class UrlMappings {
             "/agreements"(controller: 'agreementPublic', action: 'agreementsOfDept', method: 'GET')
         }
 
-        "/students"(resource: 'student', includes: []) {
-            "/degree-applications"(resource: 'applicationForm')
+        "/students"(resources: 'student', includes: []) {
+            "/awards"(resources: 'awardPublic', includes: ['index', 'show']) {
+                "/applications"(resources: 'applicationForm')
+            }
         }
 
         "500"(view: '/error')
