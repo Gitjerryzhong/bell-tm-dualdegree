@@ -102,3 +102,7 @@ security:
     oauth2:
         resource:
             userInfoUri: http://localhost/uaa/user
+
+bell:
+    student:
+        filesPath: 'D:\temp\tm'

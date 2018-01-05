@@ -7,11 +7,14 @@ import cn.edu.bnuz.bell.organization.Student
 import cn.edu.bnuz.bell.workflow.DomainStateMachineHandler
 import cn.edu.bnuz.bell.workflow.commands.SubmitCommand
 import grails.gorm.transactions.Transactional
+import org.springframework.beans.factory.annotation.Value
 
 import java.time.LocalDate
 
 @Transactional
 class DegreeApplicationFormService {
+    @Value('${bell.student.filesPath}')
+    String filesPath
     DomainStateMachineHandler domainStateMachineHandler
 
     /**
@@ -82,12 +85,13 @@ where award.id = :awardId and student.id = :userId
         Student student = Student.get(userId)
         //15级是分水岭，以前的采用CooperativeUniversity，后面的采用协议中的合作大学
         def universities
-        if (student.major.grade >= 2015) {
+        if (student.major.grade <= 2015) {
             universities = getCooperativeUniversity(student.departmentId)
         } else {
             universities = getCooperativeUniversity(student)
         }
         return [
+                form: [],
                 timeNode: [
                         requestBegin: award.requestBegin,
                         requestEnd: award.requestEnd,
@@ -121,7 +125,7 @@ where award.id = :awardId and student.id = :userId
 
     private List<String> getCooperativeUniversity(String departmentId) {
         CooperativeUniversity.executeQuery'''
-select c.name as universityEn
+select new map(c.name as universityEn)
 from CooperativeUniversity c
 where c.department.id = :departmentId
 ''', [departmentId: departmentId]
@@ -136,8 +140,8 @@ select new map(
 from AgreementMajor agmj 
 join agmj.agreement ag
 join ag.region agRegion,
-StudentAbroad sa join sa.agreementRegion saRegion
-where agRegion = saRegion and sa.student = :student and sa.major = agmj.major
-''', [student: student]
+StudentAbroad sa join sa.agreementRegion saRegion join sa.student student
+where agRegion = saRegion and student.id = :studentId and student.major = agmj.major
+''', [studentId: student.id]
     }
 }

@@ -140,3 +140,5 @@ bell:
             prefixes:
                 - dv
                 - et
+    student:
+        filesPath: 'D:\temp\tm'

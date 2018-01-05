@@ -18,6 +18,8 @@ class UrlMappings {
             "/awards"(resources: 'applicationForm', includes: ['index'])
         }
 
+        "/picture"(resource: 'picture', includes: ['show'])
+
         "/"(view:"/index")
         "500"(view:'/error')
         "404"(view:'/notFound')

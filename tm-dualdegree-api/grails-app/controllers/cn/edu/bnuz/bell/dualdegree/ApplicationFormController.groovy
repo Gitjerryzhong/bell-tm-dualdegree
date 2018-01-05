@@ -9,12 +9,12 @@ class ApplicationFormController {
     DegreeApplicationFormService degreeApplicationFormService
     AwardService awardService
 
-    def show(Long awardId, String userId) {
-        renderJson degreeApplicationFormService.getFormForShow(awardId, userId)
+    def show(String studentId, Long awardId) {
+        renderJson degreeApplicationFormService.getFormForShow(awardId, studentId)
     }
 
-    def create(Long awardId, String userId) {
-        renderJson degreeApplicationFormService.getFormForCreate(awardId, userId)
+    def create(String studentId, Long awardPublicId) {
+        renderJson degreeApplicationFormService.getFormForCreate(awardPublicId, studentId)
     }
 
     def patch(String userId, Long id, String op) {
