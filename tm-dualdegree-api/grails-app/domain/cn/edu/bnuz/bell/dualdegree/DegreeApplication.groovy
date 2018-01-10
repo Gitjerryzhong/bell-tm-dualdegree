@@ -116,7 +116,12 @@ class DegreeApplication implements StateObject {
         workflowInstance                 comment: '工作流实例'
     }
     static constraints = {
-        approver nullable: true
+        dateSubmitted    nullable: true
+        checker          nullable: true
+        dateChecked      nullable: true
+        approver         nullable: true
+        dateApproved     nullable: true
+        workflowInstance nullable: true
     }
 
     String getWorkflowId() {

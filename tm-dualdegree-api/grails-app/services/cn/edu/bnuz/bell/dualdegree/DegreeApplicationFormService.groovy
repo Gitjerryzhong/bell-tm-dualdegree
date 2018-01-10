@@ -18,22 +18,57 @@ class DegreeApplicationFormService {
     DomainStateMachineHandler domainStateMachineHandler
 
     /**
+     * 保存本人在指定学位授予批次的申请单
+     * @param userId 申请人ID
+     * @param awardId 学位授予工作ID
+     * @return 持久化的表单
+     */
+    def create(String userId, Long awardId, ApplicationFormCommand cmd) {
+        if (getFormInfo(userId, awardId)) {
+            //同一批每人只能一个申请
+            throw new ForbiddenException()
+        }
+        def now = new Date()
+
+        DegreeApplication form = new DegreeApplication(
+                award: Award.load(awardId),
+                student: Student.load(userId),
+                dateCreated: LocalDate.now(),
+                universityCooperative: cmd.universityCooperative,
+                majorCooperative: cmd.majorCooperative,
+                email: cmd.email,
+                linkman: cmd.linkman,
+                phone: cmd.phone,
+                dateModified: now,
+                status: domainStateMachineHandler.initialState
+        )
+
+        if (!form.save()) {
+            form.errors.each {
+                println it
+            }
+        }
+        domainStateMachineHandler.create(form, userId)
+        return form
+    }
+
+    /**
      * 获取本人在指定学位授予批次的申请单用于显示
      * @param userId 申请人ID
      * @param awardId 学位授予工作ID
      * @return 申请信息
      */
-    Map getFormInfo(Long awardId, String userId) {
+    Map getFormInfo(String userId, Long awardId) {
         def results = DegreeApplication.executeQuery'''
 select new map(
   form.id as id,
   award.id as awardId,
   award.requestEnd as requestEnd,
   award.paperEnd as paperEnd,
-  award.approvalEnd a approvalEnd,
+  award.approvalEnd as approvalEnd,
   student.id as studentId,
   student.name as studentName,
-  form.phone as phoneNumber,
+  form.phone as phone,
   form.linkman as linkman,
   form.email as email,
   form.universityCooperative as universityCooperative,
@@ -80,13 +115,13 @@ where award.id = :awardId and student.id = :userId
         return form
     }
 
-    def getFormForCreate(Long awardId, String userId) {
+    def getFormForCreate(String userId, Long awardId) {
         Award award = Award.get(awardId)
         Student student = Student.get(userId)
         //15级是分水岭，以前的采用CooperativeUniversity，后面的采用协议中的合作大学
         def universities
         if (student.major.grade <= 2015) {
-            universities = getCooperativeUniversity(student.departmentId)
+            universities = getCooperativeUniversity(student.department.id)
         } else {
             universities = getCooperativeUniversity(student)
         }
@@ -98,8 +133,8 @@ where award.id = :awardId and student.id = :userId
                         paperEnd: award.paperEnd,
                         approvalEnd: award.approvalEnd
                 ],
-                universities: universities
-
+                universities: universities,
+                fileNames: findFiles(awardId, userId)
         ]
     }
     def submit(String userId, SubmitCommand cmd) {
@@ -143,5 +178,22 @@ join ag.region agRegion,
 StudentAbroad sa join sa.agreementRegion saRegion join sa.student student
 where agRegion = saRegion and student.id = :studentId and student.major = agmj.major
 ''', [studentId: student.id]
+    }
+
+    private Map<String, String> findFiles(Long awardId, String studentId) {
+        File dir = new File("${filesPath}/${awardId}/${studentId}")
+        if (!dir.exists()) {
+            return []
+        }
+        Map<String, String> fileNames = [:]
+        for (File file: dir.listFiles()) {
+            def index = file.name.indexOf('_')
+            if (index == -1) {
+                continue
+            }
+            String key = file.name.substring(0, index)
+            fileNames[key] = file.name
+        }
+        return fileNames
     }
 }

@@ -18,7 +18,12 @@ class UrlMappings {
             "/awards"(resources: 'applicationForm', includes: ['index'])
         }
 
-        "/picture"(resource: 'picture', includes: ['show'])
+        "/picture"(resource: 'picture', includes: ['show']) {
+            collection {
+                "/fileview"(action: 'fileView', method: 'GET')
+                "/filesrc"(action: 'fileSource', method: 'GET')
+            }
+        }
 
         "/"(view:"/index")
         "500"(view:'/error')

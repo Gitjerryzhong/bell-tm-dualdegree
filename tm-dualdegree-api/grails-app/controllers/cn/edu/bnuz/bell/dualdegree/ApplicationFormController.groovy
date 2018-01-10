@@ -7,14 +7,22 @@ import org.springframework.security.access.prepost.PreAuthorize
 @PreAuthorize('hasRole("ROLE_DUALDEGREE_STUDENT")')
 class ApplicationFormController {
     DegreeApplicationFormService degreeApplicationFormService
-    AwardService awardService
 
-    def show(String studentId, Long awardId) {
-        renderJson degreeApplicationFormService.getFormForShow(awardId, studentId)
+    def save(String studentId, Long awardPublicId) {
+        def cmd = new ApplicationFormCommand()
+        bindData(cmd, request.JSON)
+        def form = degreeApplicationFormService.create(studentId, awardPublicId, cmd)
+        renderJson([id: form.id])
+    }
+    def show(String studentId, Long awardPublicId, Long id) {
+        renderJson ([
+                        form: degreeApplicationFormService.getFormForShow(studentId, awardPublicId),
+                        fileNames: degreeApplicationFormService.findFiles(awardPublicId, studentId)
+        ])
     }
 
     def create(String studentId, Long awardPublicId) {
-        renderJson degreeApplicationFormService.getFormForCreate(awardPublicId, studentId)
+        renderJson degreeApplicationFormService.getFormForCreate(studentId, awardPublicId)
     }
 
     def patch(String userId, Long id, String op) {
