@@ -53,6 +53,38 @@ class DegreeApplicationFormService {
     }
 
     /**
+     * 保存本人在指定学位授予批次的申请单
+     * @param userId 申请人ID
+     * @param awardId 学位授予工作ID
+     * @return 持久化的表单
+     */
+    def update(String userId, Long awardId, ApplicationFormCommand cmd) {
+        DegreeApplication form = DegreeApplication.load(cmd.id)
+        Award award = Award.get(awardId)
+        Student student = Student.get(userId)
+        if (form.award != award || form.student != student) {
+            //无权更新
+            throw new ForbiddenException()
+        }
+        def now = new Date()
+
+        form.setUniversityCooperative(cmd.universityCooperative)
+        form.setMajorCooperative(cmd.majorCooperative)
+        form.setEmail(cmd.email)
+        form.setLinkman(cmd.linkman)
+        form.setPhone(cmd.phone)
+        form.setDateModified(now)
+
+        if (!form.save()) {
+            form.errors.each {
+                println it
+            }
+        }
+        domainStateMachineHandler.create(form, userId)
+        return form
+    }
+
+    /**
      * 获取本人在指定学位授予批次的申请单用于显示
      * @param userId 申请人ID
      * @param awardId 学位授予工作ID
@@ -115,7 +147,7 @@ where award.id = :awardId and student.id = :userId
         return form
     }
 
-    def getFormForCreate(String userId, Long awardId) {
+    Map getFormForCreate(String userId, Long awardId) {
         Award award = Award.get(awardId)
         Student student = Student.get(userId)
         //15级是分水岭，以前的采用CooperativeUniversity，后面的采用协议中的合作大学
@@ -137,6 +169,14 @@ where award.id = :awardId and student.id = :userId
                 fileNames: findFiles(awardId, userId)
         ]
     }
+
+    def getFormForEdit(String userId, Long awardId) {
+        Map vm = getFormForCreate(userId, awardId)
+        vm.form = getFormForShow(userId, awardId)
+
+        return vm
+    }
+
     def submit(String userId, SubmitCommand cmd) {
         DegreeApplication form = DegreeApplication.get(cmd.id)
 
