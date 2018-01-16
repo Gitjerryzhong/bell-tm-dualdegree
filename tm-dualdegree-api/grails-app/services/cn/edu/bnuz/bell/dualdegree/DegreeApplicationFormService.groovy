@@ -4,6 +4,7 @@ import cn.edu.bnuz.bell.http.BadRequestException
 import cn.edu.bnuz.bell.http.ForbiddenException
 import cn.edu.bnuz.bell.http.NotFoundException
 import cn.edu.bnuz.bell.organization.Student
+import cn.edu.bnuz.bell.security.SecurityService
 import cn.edu.bnuz.bell.workflow.DomainStateMachineHandler
 import cn.edu.bnuz.bell.workflow.commands.SubmitCommand
 import grails.gorm.transactions.Transactional
@@ -16,23 +17,50 @@ class DegreeApplicationFormService {
     @Value('${bell.student.filesPath}')
     String filesPath
     DomainStateMachineHandler domainStateMachineHandler
+    SecurityService securityService
+
+    /**
+     * @param userId 申请人Id
+     * @return 已申请过的授予通知和申请状态、正在开放的授予通知
+     */
+    def list(String userId) {
+    DegreeApplication.executeQuery'''
+select new map(
+    da.id as applicationId,
+    ba.id   as id,
+    ba.title   as title,
+    ba.requestBegin as requestBegin,
+    ba.requestEnd as requestEnd,
+    ba.paperEnd as paperEnd,
+    ba.approvalEnd as approvalEnd,
+    ba.creator as creator,
+    ba.dateCreated as dateCreated,
+    ba.department.name as departmentName,
+    da.status as status
+)
+from DegreeApplication da 
+right join da.award ba with da.student.id = :userId
+where ba.approvalEnd > now() and ba.department.id = :departmentId
+''', [userId: userId, departmentId: securityService.departmentId]
+    }
 
     /**
      * 保存本人在指定学位授予批次的申请单
      * @param userId 申请人ID
-     * @param awardId 学位授予工作ID
      * @return 持久化的表单
      */
-    def create(String userId, Long awardId, ApplicationFormCommand cmd) {
-        if (getFormInfo(userId, awardId)) {
+    def create(String userId, ApplicationFormCommand cmd) {
+        def award = Award.get(cmd.awardId)
+        def student = Student.load(userId)
+        if (award && DegreeApplication.findByStudentAndAward(student, award)) {
             //同一批每人只能一个申请
             throw new ForbiddenException()
         }
         def now = new Date()
 
         DegreeApplication form = new DegreeApplication(
-                award: Award.load(awardId),
-                student: Student.load(userId),
+                award: award,
+                student: student,
                 dateCreated: LocalDate.now(),
                 universityCooperative: cmd.universityCooperative,
                 majorCooperative: cmd.majorCooperative,
@@ -55,12 +83,11 @@ class DegreeApplicationFormService {
     /**
      * 保存本人在指定学位授予批次的申请单
      * @param userId 申请人ID
-     * @param awardId 学位授予工作ID
      * @return 持久化的表单
      */
-    def update(String userId, Long awardId, ApplicationFormCommand cmd) {
+    def update(String userId, ApplicationFormCommand cmd) {
         DegreeApplication form = DegreeApplication.load(cmd.id)
-        Award award = Award.get(awardId)
+        Award award = Award.get(cmd.awardId)
         Student student = Student.get(userId)
         if (form.award != award || form.student != student) {
             //无权更新
@@ -87,10 +114,10 @@ class DegreeApplicationFormService {
     /**
      * 获取本人在指定学位授予批次的申请单用于显示
      * @param userId 申请人ID
-     * @param awardId 学位授予工作ID
+     * @param id 申请单ID
      * @return 申请信息
      */
-    Map getFormInfo(String userId, Long awardId) {
+    Map getFormInfo(String userId, Long id) {
         def results = DegreeApplication.executeQuery'''
 select new map(
   form.id as id,
@@ -120,8 +147,8 @@ join form.award award
 join form.student student
 left join form.checker checker
 left join form.approver approver
-where award.id = :awardId and student.id = :userId
-''', [awardId: awardId, userId: userId]
+where form.id = :id and student.id = :userId
+''', [id: id, userId: userId]
         if (!results) {
             return null
         }
@@ -132,11 +159,11 @@ where award.id = :awardId and student.id = :userId
     /**
      * 获取申请单信息，用于显示
      * @param userId 申请人ID
-     * @param awardId 学位授予工作ID
+     * @param id 申请单ID
      * @return 申请信息
      */
-    def getFormForShow (String userId, Long awardId) {
-        def form = getFormInfo(userId, awardId)
+    Map getFormForShow (String userId, Long id) {
+        def form = getFormInfo(userId, id)
         if (!form) {
             throw new NotFoundException()
         }
@@ -166,13 +193,17 @@ where award.id = :awardId and student.id = :userId
                         approvalEnd: award.approvalEnd
                 ],
                 universities: universities,
-                fileNames: findFiles(awardId, userId)
+                fileNames: findFiles(userId, awardId)
         ]
     }
 
-    def getFormForEdit(String userId, Long awardId) {
-        Map vm = getFormForCreate(userId, awardId)
-        vm.form = getFormForShow(userId, awardId)
+    def getFormForEdit(String userId, Long id) {
+        def application = DegreeApplication.get(id)
+        if (!application) {
+            throw new BadRequestException()
+        }
+        Map vm = getFormForCreate(userId, application.awardId)
+        vm.form = getFormForShow(userId, id)
 
         return vm
     }
@@ -220,10 +251,10 @@ where agRegion = saRegion and student.id = :studentId and student.major = agmj.m
 ''', [studentId: student.id]
     }
 
-    private Map<String, String> findFiles(Long awardId, String studentId) {
-        File dir = new File("${filesPath}/${awardId}/${studentId}")
+    Map<String, String> findFiles(String studentId, id) {
+        File dir = new File("${filesPath}/${id}/${studentId}")
         if (!dir.exists()) {
-            return []
+            return [:]
         }
         Map<String, String> fileNames = [:]
         for (File file: dir.listFiles()) {

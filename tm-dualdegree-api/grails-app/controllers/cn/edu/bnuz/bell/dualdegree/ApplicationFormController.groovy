@@ -9,26 +9,32 @@ class ApplicationFormController {
     DegreeApplicationFormService degreeApplicationFormService
 
     /**
+     * @param studentId 学号
+     * @return 可申请授予和已申请单
+     */
+    def index(String studentId) {
+        renderJson degreeApplicationFormService.list(studentId)
+    }
+    /**
      * 保存数据
      * @param studentId 学号
-     * @param awardPublicId 学位授予批次id
-     * @return
+     * @return id
      */
-    def save(String studentId, Long awardPublicId) {
+    def save(String studentId) {
         def cmd = new ApplicationFormCommand()
         bindData(cmd, request.JSON)
-        def form = degreeApplicationFormService.create(studentId, awardPublicId, cmd)
+        println cmd.value
+        def form = degreeApplicationFormService.create(studentId, cmd)
         renderJson([id: form.id])
     }
 
     /**
      * 编辑数据
      * @param studentId 学号
-     * @param awardPublicId 学位授予批次id
      * @param id 申请单id
      */
-    def edit(String studentId, Long awardPublicId, Long id) {
-        renderJson degreeApplicationFormService.getFormForEdit(studentId, awardPublicId)
+    def edit(String studentId, Long id) {
+        renderJson degreeApplicationFormService.getFormForEdit(studentId, id)
     }
 
     /**
@@ -38,10 +44,11 @@ class ApplicationFormController {
      * @param id 申请单id
      * @return
      */
-    def show(String studentId, Long awardPublicId, Long id) {
+    def show(String studentId, Long id) {
+        def form = degreeApplicationFormService.getFormForShow(studentId, id)
         renderJson ([
-                        form: degreeApplicationFormService.getFormForShow(studentId, awardPublicId),
-                        fileNames: degreeApplicationFormService.findFiles(awardPublicId, studentId)
+                        form: form,
+                        fileNames: degreeApplicationFormService.findFiles(studentId, form.awardId)
         ])
     }
 
@@ -52,15 +59,15 @@ class ApplicationFormController {
         def cmd = new ApplicationFormCommand()
         bindData(cmd, request.JSON)
         cmd.id = id
-        degreeApplicationFormService.update(studentId, awardPublicId, cmd)
+        degreeApplicationFormService.update(studentId, cmd)
         renderOk()
     }
 
     /**
      * 创建
      */
-    def create(String studentId, Long awardPublicId) {
-        renderJson degreeApplicationFormService.getFormForCreate(studentId, awardPublicId)
+    def create(String studentId, Long awardId) {
+        renderJson degreeApplicationFormService.getFormForCreate(studentId, awardId)
     }
 
     def patch(String userId, Long id, String op) {

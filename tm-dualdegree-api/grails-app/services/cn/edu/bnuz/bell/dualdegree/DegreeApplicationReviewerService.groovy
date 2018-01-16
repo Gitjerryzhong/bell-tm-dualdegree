@@ -20,7 +20,12 @@ class DegreeApplicationReviewerService implements ReviewerProvider{
     }
 
     List<Map> getCheckers(Long id) {
-
+        Award.executeQuery'''
+select new map(c.id as id, c.name as name)
+from Award a 
+join a.creator c
+where a.id = :id
+''', [id: id]
     }
 
     List<Map> getApprovers() {

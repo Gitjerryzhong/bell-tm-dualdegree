@@ -7,7 +7,6 @@ import org.springframework.security.access.prepost.PreAuthorize
 class AwardPublicController {
     AwardService awardService
     SecurityService securityService
-    DegreeApplicationFormService degreeApplicationFormService
 
     def index(String studentId) {
         renderJson(awardService.list(studentId))
@@ -18,8 +17,7 @@ class AwardPublicController {
         if (form.departmentId != securityService.departmentId) {
             renderBadRequest()
         } else {
-            def applicationForm = degreeApplicationFormService.getFormInfo(securityService.userId, id)
-            renderJson([award: form, applicationId: applicationForm ? applicationForm.id : 0])
+           renderJson(form)
         }
 
     }

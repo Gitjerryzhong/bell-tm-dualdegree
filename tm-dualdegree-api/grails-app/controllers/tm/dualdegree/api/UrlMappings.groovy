@@ -15,9 +15,8 @@ class UrlMappings {
         }
 
         "/students"(resources: 'student', includes: []) {
-            "/awards"(resources: 'awardPublic', includes: ['index', 'show']) {
-                "/applications"(resources: 'applicationForm')
-            }
+            "/applications"(resources: 'applicationForm')
+            "/awards"(resources: 'awardPublic', ['show'])
         }
 
         "500"(view: '/error')
