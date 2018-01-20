@@ -6,14 +6,15 @@ import org.springframework.security.access.prepost.PreAuthorize
 
 @PreAuthorize('hasRole("ROLE_DUALDEGREE_STUDENT")')
 class ApplicationFormController {
-    DegreeApplicationFormService degreeApplicationFormService
+    ApplicationFormService applicationFormService
+    ApplicationReviewerService applicationReviewerService
 
     /**
      * @param studentId 学号
      * @return 可申请授予和已申请单
      */
     def index(String studentId) {
-        renderJson degreeApplicationFormService.list(studentId)
+        renderJson applicationFormService.list(studentId)
     }
     /**
      * 保存数据
@@ -23,8 +24,7 @@ class ApplicationFormController {
     def save(String studentId) {
         def cmd = new ApplicationFormCommand()
         bindData(cmd, request.JSON)
-        println cmd.value
-        def form = degreeApplicationFormService.create(studentId, cmd)
+        def form = applicationFormService.create(studentId, cmd)
         renderJson([id: form.id])
     }
 
@@ -34,7 +34,7 @@ class ApplicationFormController {
      * @param id 申请单id
      */
     def edit(String studentId, Long id) {
-        renderJson degreeApplicationFormService.getFormForEdit(studentId, id)
+        renderJson applicationFormService.getFormForEdit(studentId, id)
     }
 
     /**
@@ -45,41 +45,59 @@ class ApplicationFormController {
      * @return
      */
     def show(String studentId, Long id) {
-        def form = degreeApplicationFormService.getFormForShow(studentId, id)
+        def form = applicationFormService.getFormForShow(studentId, id)
         renderJson ([
                         form: form,
-                        fileNames: degreeApplicationFormService.findFiles(studentId, form.awardId)
+                        award: applicationFormService.getAward((Long)form.awardId),
+                        fileNames: applicationFormService.findFiles(studentId, form.awardId)
         ])
     }
 
     /**
      * 更新数据
      */
-    def update(String studentId, Long awardPublicId, Long id) {
+    def update(String studentId, Long id) {
         def cmd = new ApplicationFormCommand()
         bindData(cmd, request.JSON)
         cmd.id = id
-        degreeApplicationFormService.update(studentId, cmd)
+        applicationFormService.update(studentId, cmd)
         renderOk()
     }
 
     /**
      * 创建
+     * @param studentId 学号
+     * @param awardId 授予Id
+     * @return
      */
     def create(String studentId, Long awardId) {
-        renderJson degreeApplicationFormService.getFormForCreate(studentId, awardId)
+        renderJson applicationFormService.getFormForCreate(studentId, awardId)
     }
 
-    def patch(String userId, Long id, String op) {
+    def patch(String studentId, Long id, String op) {
         def operation = Event.valueOf(op)
         switch (operation) {
             case Event.SUBMIT:
                 def cmd = new SubmitCommand()
                 bindData(cmd, request.JSON)
                 cmd.id = id
-                degreeApplicationFormService.submit(userId, cmd)
+                applicationFormService.submit(studentId, cmd)
                 break
         }
         renderOk()
+    }
+
+    /**
+     * 获取审核人
+     * @param applicationFormId 申请Id
+     * @return 审核人列表
+     */
+    def checkers(Long applicationFormId) {
+        def form = DegreeApplication.load(applicationFormId)
+        if (!form) {
+            renderBadRequest()
+        } else {
+            renderJson applicationReviewerService.getCheckers(form.awardId)
+        }
     }
 }

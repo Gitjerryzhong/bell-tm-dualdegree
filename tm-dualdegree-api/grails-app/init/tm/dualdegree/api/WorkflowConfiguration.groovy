@@ -1,6 +1,6 @@
 package tm.dualdegree.api
 
-import cn.edu.bnuz.bell.dualdegree.DegreeApplicationReviewerService
+import cn.edu.bnuz.bell.dualdegree.ApplicationReviewerService
 import cn.edu.bnuz.bell.workflow.DomainStateMachineHandler
 import cn.edu.bnuz.bell.workflow.Event
 import cn.edu.bnuz.bell.workflow.State
@@ -20,7 +20,7 @@ class WorkflowConfiguration {
     DomainStateMachineHandler domainStateMachineHandler(
             StateMachine<State, Event> stateMachine,
             StateMachinePersister<State, Event, StateObject> persister,
-            DegreeApplicationReviewerService degreeApplicationReviewerService) {
-        new DomainStateMachineHandler(stateMachine, persister, degreeApplicationReviewerService)
+            ApplicationReviewerService applicationReviewerService) {
+        new DomainStateMachineHandler(stateMachine, persister, applicationReviewerService)
     }
 }

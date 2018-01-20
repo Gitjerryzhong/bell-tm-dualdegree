@@ -15,8 +15,16 @@ class UrlMappings {
         }
 
         "/students"(resources: 'student', includes: []) {
-            "/applications"(resources: 'applicationForm')
             "/awards"(resources: 'awardPublic', ['show'])
+            "/applications"(resources: 'applicationForm') {
+                "/checkers"(controller: 'applicationForm', action: 'checkers', method: 'GET')
+            }
+        }
+
+        "/teachers"(resources: 'teacher', includes: []) {
+            "/applications"(resources: 'applicationCheck', includes: ['index', 'show']) {
+                "/workitems"(resources: 'applicationCheck', includes: ['show', 'patch'])
+            }
         }
 
         "500"(view: '/error')

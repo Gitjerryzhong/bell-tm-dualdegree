@@ -18,6 +18,10 @@ class UrlMappings {
             "/applications"(resources: 'applicationForm', includes: ['index'])
         }
 
+        "/teachers"(resources: 'teacher', includes: []) {
+            "/applications"(resources: 'applicationCheck', includes: ['index'])
+        }
+
         "/picture"(resource: 'picture', includes: ['show']) {
             collection {
                 "/fileview"(action: 'fileView', method: 'GET')

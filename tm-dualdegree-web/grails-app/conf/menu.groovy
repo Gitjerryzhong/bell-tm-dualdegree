@@ -6,6 +6,7 @@ menuGroup 'main', {
         agreementPublicDept 40, 'PERM_DUALDEGREE_DEPT_ADMIN', '/web/dualdegree/departments/${departmentId}/agreements'
         award               50, 'PERM_DUALDEGREE_DEPT_ADMIN', '/web/dualdegree/departments/${departmentId}/awards'
         agreementPublic     60, 'PERM_DUALDEGREE_AGREEMENT_READ', '/web/dualdegree/agreement-publics'
+        applicationCheck    70, 'PERM_DUALDEGREE_DEPT_ADMIN', '/web/dualdegree/teachers/${userId}/applications'
     }
     dualDegree 61,{
         application     10, 'PERM_DUALDEGREE_WRITE', '/web/dualdegree/students/${userId}/applications'

@@ -7,7 +7,7 @@ import cn.edu.bnuz.bell.workflow.ReviewerProvider
 import grails.gorm.transactions.Transactional
 
 @Transactional(readOnly = true)
-class DegreeApplicationReviewerService implements ReviewerProvider{
+class ApplicationReviewerService implements ReviewerProvider{
     List<Map> getReviewers(Object id, String activity) {
         switch (activity) {
             case Activities.CHECK:
@@ -20,11 +20,11 @@ class DegreeApplicationReviewerService implements ReviewerProvider{
     }
 
     List<Map> getCheckers(Long id) {
-        Award.executeQuery'''
+        DegreeApplication.executeQuery'''
 select new map(c.id as id, c.name as name)
-from Award a 
-join a.creator c
-where a.id = :id
+from DegreeApplication da 
+join da.checker c
+where da.id = :id
 ''', [id: id]
     }
 

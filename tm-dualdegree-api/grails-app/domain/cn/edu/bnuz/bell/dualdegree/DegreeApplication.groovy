@@ -128,6 +128,5 @@ class DegreeApplication implements StateObject {
         WORKFLOW_ID
     }
 
-    static final WORKFLOW_ID = 'dualdegree.applicationForm'
-    static final CONFIG_NOTICE = 'dualdegree.applicationForm.notice'
+    static final WORKFLOW_ID = 'degree.application'
 }

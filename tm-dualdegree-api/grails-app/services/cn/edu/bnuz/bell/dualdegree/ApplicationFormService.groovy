@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Value
 import java.time.LocalDate
 
 @Transactional
-class DegreeApplicationFormService {
+class ApplicationFormService {
     @Value('${bell.student.filesPath}')
     String filesPath
     DomainStateMachineHandler domainStateMachineHandler
@@ -24,7 +24,8 @@ class DegreeApplicationFormService {
      * @return 已申请过的授予通知和申请状态、正在开放的授予通知
      */
     def list(String userId) {
-    DegreeApplication.executeQuery'''
+
+        DegreeApplication.executeQuery'''
 select new map(
     da.id as applicationId,
     ba.id   as id,
@@ -40,8 +41,8 @@ select new map(
 )
 from DegreeApplication da 
 right join da.award ba with da.student.id = :userId
-where ba.approvalEnd > now() and ba.department.id = :departmentId
-''', [userId: userId, departmentId: securityService.departmentId]
+where ba.approvalEnd >= :date and ba.department.id = :departmentId
+''', [userId: userId, date: LocalDate.now(),departmentId: securityService.departmentId]
     }
 
     /**
@@ -52,15 +53,22 @@ where ba.approvalEnd > now() and ba.department.id = :departmentId
     def create(String userId, ApplicationFormCommand cmd) {
         def award = Award.get(cmd.awardId)
         def student = Student.load(userId)
-        if (award && DegreeApplication.findByStudentAndAward(student, award)) {
-            //同一批每人只能一个申请
-            throw new ForbiddenException()
+        if (award && student) {
+            if (!award.betweenApplyDateRange() ||
+                DegreeApplication.findByStudentAndAward(student, award)) {
+                //同一批每人只能一个申请， 超期禁止申请
+                throw new ForbiddenException()
+            }
+        } else {
+            // 非法访问
+            throw new BadRequestException()
         }
         def now = new Date()
 
         DegreeApplication form = new DegreeApplication(
                 award: award,
                 student: student,
+                checker: award.creator,
                 dateCreated: LocalDate.now(),
                 universityCooperative: cmd.universityCooperative,
                 majorCooperative: cmd.majorCooperative,
@@ -117,14 +125,11 @@ where ba.approvalEnd > now() and ba.department.id = :departmentId
      * @param id 申请单ID
      * @return 申请信息
      */
-    Map getFormInfo(String userId, Long id) {
+    Map getFormInfo(Long id) {
         def results = DegreeApplication.executeQuery'''
 select new map(
   form.id as id,
   award.id as awardId,
-  award.requestEnd as requestEnd,
-  award.paperEnd as paperEnd,
-  award.approvalEnd as approvalEnd,
   student.id as studentId,
   student.name as studentName,
   form.phone as phone,
@@ -147,8 +152,8 @@ join form.award award
 join form.student student
 left join form.checker checker
 left join form.approver approver
-where form.id = :id and student.id = :userId
-''', [id: id, userId: userId]
+where form.id = :id
+''', [id: id]
         if (!results) {
             return null
         }
@@ -163,13 +168,14 @@ where form.id = :id and student.id = :userId
      * @return 申请信息
      */
     Map getFormForShow (String userId, Long id) {
-        def form = getFormInfo(userId, id)
+        def form = getFormInfo(id)
         if (!form) {
             throw new NotFoundException()
         }
-        // 防止超期提交
-        form.editable = form.requestEnd >= LocalDate.now() &&
-                domainStateMachineHandler.canUpdate(form)
+        if (form.studentId != userId) {
+            throw new ForbiddenException()
+        }
+        form.editable = domainStateMachineHandler.canUpdate(form)
 
         return form
     }
@@ -222,7 +228,7 @@ where form.id = :id and student.id = :userId
         if (!domainStateMachineHandler.canSubmit(form)) {
             throw new BadRequestException()
         }
-
+        println cmd.to
         domainStateMachineHandler.submit(form, userId, cmd.to, cmd.comment, cmd.title)
 
         form.dateSubmitted = new Date()
@@ -266,5 +272,9 @@ where agRegion = saRegion and student.id = :studentId and student.major = agmj.m
             fileNames[key] = file.name
         }
         return fileNames
+    }
+
+    def getAward(Long awardId) {
+        Award.get(awardId)
     }
 }

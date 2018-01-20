@@ -19,6 +19,21 @@ class Award {
     Date        dateCreated
     Department  department
 
+    /**
+     * 当前日期
+     */
+    LocalDate today = LocalDate.now()
+
+    boolean betweenApplyDateRange() {
+        today >= requestBegin && today <= requestEnd
+    }
+
+    boolean betweenCheckDateRange() {
+        today >= requestBegin && today <= approvalEnd
+    }
+
+    static transients = ['today']
+
     static mapping = {
         comment                 '双学位授予工作'
         table                   schema: 'tm_dual'
