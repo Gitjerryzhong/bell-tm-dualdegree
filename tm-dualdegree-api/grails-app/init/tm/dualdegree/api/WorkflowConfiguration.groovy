@@ -7,6 +7,7 @@ import cn.edu.bnuz.bell.workflow.State
 import cn.edu.bnuz.bell.workflow.StateObject
 import cn.edu.bnuz.bell.workflow.config.DefaultStateMachineConfiguration
 import cn.edu.bnuz.bell.workflow.config.DefaultStateMachinePersistConfiguration
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
@@ -18,6 +19,7 @@ import org.springframework.statemachine.persist.StateMachinePersister
 class WorkflowConfiguration {
     @Bean
     DomainStateMachineHandler domainStateMachineHandler(
+            @Qualifier('DegreeApplicationStateMachine')
             StateMachine<State, Event> stateMachine,
             StateMachinePersister<State, Event, StateObject> persister,
             ApplicationReviewerService applicationReviewerService) {

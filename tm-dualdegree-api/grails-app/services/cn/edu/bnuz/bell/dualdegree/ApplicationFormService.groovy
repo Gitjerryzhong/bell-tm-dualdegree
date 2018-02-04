@@ -68,7 +68,7 @@ where ba.approvalEnd >= :date and ba.department.id = :departmentId
         DegreeApplication form = new DegreeApplication(
                 award: award,
                 student: student,
-                checker: award.creator,
+                approver: award.creator,
                 dateCreated: LocalDate.now(),
                 universityCooperative: cmd.universityCooperative,
                 majorCooperative: cmd.majorCooperative,
@@ -115,7 +115,7 @@ where ba.approvalEnd >= :date and ba.department.id = :departmentId
                 println it
             }
         }
-        domainStateMachineHandler.create(form, userId)
+        domainStateMachineHandler.update(form, userId)
         return form
     }
 
@@ -140,8 +140,6 @@ select new map(
   form.dateCreated as dateCreated,
   form.dateModified as dateModified,
   form.dateSubmitted as dateSubmitted,
-  checker.name as checker,
-  form.dateChecked as dateChecked,
   approver.name as approver,
   form.dateApproved as dateApproved,
   form.status as status,
@@ -150,7 +148,6 @@ select new map(
 from DegreeApplication form
 join form.award award
 join form.student student
-left join form.checker checker
 left join form.approver approver
 where form.id = :id
 ''', [id: id]

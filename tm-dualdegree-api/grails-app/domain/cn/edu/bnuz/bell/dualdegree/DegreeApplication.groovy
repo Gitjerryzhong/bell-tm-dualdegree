@@ -69,22 +69,27 @@ class DegreeApplication implements StateObject {
     Date dateSubmitted
 
     /**
-     * 审核人
+     * 论文提交时间
      */
-    Teacher checker
+    Date datePaperSubmitted
 
     /**
-     * 审核时间
+     * 论文审批人
      */
-    Date dateChecked
+    Teacher paperApprover
 
     /**
-     * 论文导师，审批人
+     * 论文审批时间
+     */
+    Date datePaperApproved
+
+    /**
+     * 材料审批人
      */
     Teacher approver
 
     /**
-     * 审批时间
+     * 材料审批时间
      */
     Date dateApproved
 
@@ -109,19 +114,21 @@ class DegreeApplication implements StateObject {
         dateCreated                      comment: '创建时间'
         dateModified                     comment: '修改时间'
         dateSubmitted                    comment: '提交时间'
-        checker                          comment: '审核人'
-        dateChecked                      comment: '审核时间'
-        approver                         comment: '审批人，论文导师'
-        dateApproved                     comment: '审批时间'
+        datePaperSubmitted               comment: '论文提交时间'
+        paperApprover                    comment: '论文审批人'
+        datePaperApproved                comment: '论文审批时间'
+        approver                         comment: '材料审批人'
+        dateApproved                     comment: '材料审批时间'
         workflowInstance                 comment: '工作流实例'
     }
     static constraints = {
-        dateSubmitted    nullable: true
-        checker          nullable: true
-        dateChecked      nullable: true
-        approver         nullable: true
-        dateApproved     nullable: true
-        workflowInstance nullable: true
+        dateSubmitted           nullable: true
+        datePaperSubmitted      nullable: true
+        paperApprover           nullable: true
+        approver                nullable: true
+        datePaperApproved       nullable: true
+        dateApproved            nullable: true
+        workflowInstance        nullable: true
     }
 
     String getWorkflowId() {

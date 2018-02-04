@@ -1,9 +1,9 @@
 package cn.edu.bnuz.bell.dualdegree
 
-import grails.testing.services.ServiceUnitTest
+import grails.testing.web.controllers.ControllerUnitTest
 import spock.lang.Specification
 
-class ApplicationCheckServiceSpec extends Specification implements ServiceUnitTest<ApplicationCheckService>{
+class ApplicationApprovalControllerSpec extends Specification implements ControllerUnitTest<ApplicationApprovalController> {
 
     def setup() {
     }

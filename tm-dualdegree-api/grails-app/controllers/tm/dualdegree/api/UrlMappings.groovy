@@ -17,13 +17,13 @@ class UrlMappings {
         "/students"(resources: 'student', includes: []) {
             "/awards"(resources: 'awardPublic', ['show'])
             "/applications"(resources: 'applicationForm') {
-                "/checkers"(controller: 'applicationForm', action: 'checkers', method: 'GET')
+                "/approvers"(controller: 'applicationForm', action: 'approvers', method: 'GET')
             }
         }
 
-        "/teachers"(resources: 'teacher', includes: []) {
-            "/applications"(resources: 'applicationCheck', includes: ['index', 'show']) {
-                "/workitems"(resources: 'applicationCheck', includes: ['show', 'patch'])
+        "/approvers"(resources: 'approver', includes: []) {
+            "/applications"(resources: 'applicationApproval', includes: ['index', 'show']) {
+                "/workitems"(resources: 'applicationApproval', includes: ['show', 'patch'])
             }
         }
 

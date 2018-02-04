@@ -4,6 +4,7 @@ import cn.edu.bnuz.bell.http.BadRequestException
 import cn.edu.bnuz.bell.organization.Teacher
 import cn.edu.bnuz.bell.security.User
 import cn.edu.bnuz.bell.service.DataAccessService
+import cn.edu.bnuz.bell.workflow.Activities
 import cn.edu.bnuz.bell.workflow.DomainStateMachineHandler
 import cn.edu.bnuz.bell.workflow.ListCommand
 import cn.edu.bnuz.bell.workflow.ListType
@@ -11,10 +12,12 @@ import cn.edu.bnuz.bell.workflow.State
 import cn.edu.bnuz.bell.workflow.WorkflowActivity
 import cn.edu.bnuz.bell.workflow.WorkflowInstance
 import cn.edu.bnuz.bell.workflow.Workitem
+import cn.edu.bnuz.bell.workflow.commands.AcceptCommand
+import cn.edu.bnuz.bell.workflow.commands.RejectCommand
 import grails.gorm.transactions.Transactional
 
 @Transactional
-class ApplicationCheckService {
+class ApplicationApprovalService {
     DataAccessService dataAccessService
     DomainStateMachineHandler domainStateMachineHandler
     ApplicationFormService applicationFormService
@@ -23,8 +26,6 @@ class ApplicationCheckService {
         switch (cmd.type) {
             case ListType.TODO:
                 return findTodoList(userId, cmd.args)
-            case ListType.EXPR:
-                return findExprList(userId, cmd.args)
             case ListType.DONE:
                 return findDoneList(userId, cmd.args)
             default:
@@ -47,32 +48,8 @@ from DegreeApplication form
 join form.student student
 join student.adminClass adminClass
 join form.award award
-where form.checker.id = :teacherId
+where form.approver.id = :teacherId
 and current_date between award.requestBegin and award.approvalEnd
-and form.status = :status
-order by form.dateSubmitted
-''',[teacherId: teacherId, status: State.SUBMITTED], args
-
-        return [forms: forms, counts: getCounts(teacherId)]
-    }
-
-    def findExprList(String teacherId, Map args) {
-        def forms = DegreeApplication.executeQuery '''
-select new map(
-  form.id as id,
-  student.id as studentId,
-  student.name as studentName,
-  student.sex as sex,
-  adminClass.name as className,
-  form.dateSubmitted as date,
-  form.status as status
-)
-from DegreeApplication form
-join form.student student
-join student.adminClass adminClass
-join form.award award
-where form.checker.id = :teacherId
-and current_date not between award.requestBegin and award.approvalEnd
 and form.status = :status
 order by form.dateSubmitted
 ''',[teacherId: teacherId, status: State.SUBMITTED], args
@@ -94,10 +71,10 @@ select new map(
 from DegreeApplication form
 join form.student student
 join student.adminClass adminClass
-where form.checker.id = :teacherId
-and form.dateChecked is not null
+where form.approver.id = :teacherId
+and form.dateApproved is not null
 and form.status <> :status
-order by form.dateChecked desc
+order by form.dateApproved desc
 ''',[teacherId: teacherId, status: State.SUBMITTED], args
 
         return [forms: forms, counts: getCounts(teacherId)]
@@ -109,42 +86,30 @@ select count(*)
 from DegreeApplication form join form.award award
 where current_date between award.requestBegin and award.approvalEnd
 and form.status = :status
-and form.checker.id = :teacherId
-''', [teacherId: teacherId, status: State.SUBMITTED]
-    }
-
-    def countExprList(String teacherId) {
-        dataAccessService.getLong '''
-select count(*)
-from DegreeApplication form join form.award award
-where current_date not between award.requestBegin and award.approvalEnd
-and form.status = :status
-and form.checker.id = :teacherId
+and form.approver.id = :teacherId
 ''', [teacherId: teacherId, status: State.SUBMITTED]
     }
 
     def getCounts(String teacherId) {
         def teacher = Teacher.load(teacherId)
         def todo = countTodoList(teacherId)
-        def expr = countExprList(teacherId)
-        def done = DegreeApplication.countByCheckerAndStatusNotEqualAndDateCheckedIsNotNull(teacher, State.SUBMITTED)
+        def done = DegreeApplication.countByApproverAndStatusNotEqualAndDateApprovedIsNotNull(teacher, State.SUBMITTED)
 
         [
                 (ListType.TODO): todo,
-                (ListType.EXPR): expr,
                 (ListType.DONE): done,
         ]
     }
 
-    def getFormForReview(String teacherId, Long id, ListType type, String activity) {
+    def getFormForReview(String teacherId, Long id, ListType type) {
         def form = applicationFormService.getFormInfo(id)
 
         def workitem = Workitem.findByInstanceAndActivityAndToAndDateProcessedIsNull(
                 WorkflowInstance.load(form.workflowInstanceId),
-                WorkflowActivity.load("${DegreeApplication.WORKFLOW_ID}.${activity}"),
+                WorkflowActivity.load("${DegreeApplication.WORKFLOW_ID}.${Activities.APPROVE}"),
                 User.load(teacherId),
         )
-        domainStateMachineHandler.checkReviewer(id, teacherId, activity)
+        domainStateMachineHandler.checkReviewer(id, teacherId, Activities.APPROVE)
 
         return [
                 form               : form,
@@ -182,7 +147,7 @@ select form.id
 from DegreeApplication form join form.award award
 where current_date between award.requestBegin and award.approvalEnd
 and form.status = :status
-and form.checker.id = :teacherId
+and form.approver.id = :teacherId
 and form.dateSubmitted < (select dateSubmitted from DegreeApplication where id = :id)
 order by form.dateSubmitted desc
 ''', [teacherId: teacherId, id: id, status: State.SUBMITTED])
@@ -191,7 +156,7 @@ order by form.dateSubmitted desc
 select form.id
 from DegreeApplication form join form.award award
 where current_date not between award.requestBegin and award.approvalEnd
-and form.checker.id = :teacherId
+and form.approver.id = :teacherId
 and form.status = :status
 and form.dateSubmitted < (select dateSubmitted from DegreeApplication where id = :id)
 order by form.dateSubmitted desc
@@ -200,11 +165,11 @@ order by form.dateSubmitted desc
                 return dataAccessService.getLong('''
 select form.id
 from DegreeApplication form
-where form.checker.id = :teacherId
-and form.dateChecked is not null
+where form.approver.id = :teacherId
+and form.dateApproved is not null
 and form.status <> :status
-and form.dateChecked > (select dateChecked from DegreeApplication where id = :id)
-order by form.dateChecked asc
+and form.dateApproved > (select dateApproved from DegreeApplication where id = :id)
+order by form.dateApproved asc
 ''', [teacherId: teacherId, id: id, status: State.SUBMITTED])
         }
     }
@@ -217,7 +182,7 @@ select form.id
 from DegreeApplication form join form.award award
 where current_date between award.requestBegin and award.approvalEnd
 and form.status = :status
-and form.checker.id = :teacherId
+and form.approver.id = :teacherId
 and form.dateSubmitted > (select dateSubmitted from DegreeApplication where id = :id)
 order by form.dateSubmitted asc
 ''', [teacherId: teacherId, id: id, status: State.SUBMITTED])
@@ -226,7 +191,7 @@ order by form.dateSubmitted asc
 select form.id
 from DegreeApplication form join form.award award
 where current_date not between award.requestBegin and award.approvalEnd
-and form.checker.id = :teacherId
+and form.approver.id = :teacherId
 and form.status = :status
 and form.dateSubmitted > (select dateSubmitted from DegreeApplication where id = :id)
 order by form.dateSubmitted asc
@@ -235,12 +200,28 @@ order by form.dateSubmitted asc
                 return dataAccessService.getLong('''
 select form.id
 from DegreeApplication form
-where form.checker.id = :teacherId
-and form.dateChecked is not null
+where form.approver.id = :teacherId
+and form.dateApproved is not null
 and form.status <> :status
-and form.dateChecked < (select dateChecked from DegreeApplication where id = :id)
-order by form.dateChecked desc
+and form.dateApproved < (select dateApproved from DegreeApplication where id = :id)
+order by form.dateApproved desc
 ''', [teacherId: teacherId, id: id, status: State.SUBMITTED])
         }
+    }
+
+    void accept(String userId, AcceptCommand cmd, UUID workitemId) {
+        DegreeApplication form = DegreeApplication.get(cmd.id)
+        domainStateMachineHandler.accept(form, userId, Activities.APPROVE, cmd.comment, workitemId, form.student.id)
+        form.approver = Teacher.load(userId)
+        form.dateApproved = new Date()
+        form.save()
+    }
+
+    void reject(String userId, RejectCommand cmd, UUID workitemId) {
+        DegreeApplication form = DegreeApplication.get(cmd.id)
+        domainStateMachineHandler.reject(form, userId, Activities.APPROVE, cmd.comment, workitemId)
+        form.approver = Teacher.load(userId)
+        form.dateApproved = new Date()
+        form.save()
     }
 }

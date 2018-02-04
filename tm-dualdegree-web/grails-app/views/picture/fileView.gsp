@@ -9,7 +9,7 @@
 <script>
     var filename = '${params.fileName}';
     if (filename && filename.lastIndexOf('.') != -1) {
-        var url = '/web/dualdegree/picture/filesrc?awardId=${params.awardId}&fileName=${params.fileName}';
+        var url = '/web/dualdegree/picture/filesrc?awardId=${params.awardId}&studentId=${params.studentId}&fileName=${params.fileName}';
         var type = filename.slice(filename.lastIndexOf('.'));
         if (type.toLowerCase() == '.pdf') {
 

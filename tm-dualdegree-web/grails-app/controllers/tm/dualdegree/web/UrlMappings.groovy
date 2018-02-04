@@ -18,8 +18,8 @@ class UrlMappings {
             "/applications"(resources: 'applicationForm', includes: ['index'])
         }
 
-        "/teachers"(resources: 'teacher', includes: []) {
-            "/applications"(resources: 'applicationCheck', includes: ['index'])
+        "/approvers"(resources: 'approver', includes: []) {
+            "/applications"(resources: 'applicationApproval', includes: ['index'])
         }
 
         "/picture"(resource: 'picture', includes: ['show']) {
