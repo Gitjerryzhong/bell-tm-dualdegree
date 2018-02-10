@@ -21,6 +21,7 @@ class ApplicationApprovalService {
     DataAccessService dataAccessService
     DomainStateMachineHandler domainStateMachineHandler
     ApplicationFormService applicationFormService
+    PaperApprovalService paperApprovalService
 
     def list(String userId, ListCommand cmd) {
         switch (cmd.type) {
@@ -28,6 +29,10 @@ class ApplicationApprovalService {
                 return findTodoList(userId, cmd.args)
             case ListType.DONE:
                 return findDoneList(userId, cmd.args)
+            case ListType.TOBE:
+                return [forms: paperApprovalService.findTobeList(userId, cmd.args), counts: getCounts(userId)]
+            case ListType.NEXT:
+                return [forms: paperApprovalService.findNextList(userId, cmd.args), counts: getCounts(userId)]
             default:
                 throw new BadRequestException()
         }
@@ -98,6 +103,8 @@ and form.approver.id = :teacherId
         [
                 (ListType.TODO): todo,
                 (ListType.DONE): done,
+                (ListType.TOBE): paperApprovalService.countTobeList(teacherId),
+                (ListType.NEXT): paperApprovalService.countNextList(teacherId),
         ]
     }
 
@@ -222,6 +229,12 @@ order by form.dateApproved desc
         domainStateMachineHandler.reject(form, userId, Activities.APPROVE, cmd.comment, workitemId)
         form.approver = Teacher.load(userId)
         form.dateApproved = new Date()
+        form.save()
+    }
+
+    void setPaperApprover(Long id, String teacherId) {
+        def form = DegreeApplication.load(id)
+        form.setPaperApprover(Teacher.load(teacherId))
         form.save()
     }
 }

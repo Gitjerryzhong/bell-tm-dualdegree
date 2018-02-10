@@ -8,7 +8,5 @@ class ApplicationFormController {
     def index() { }
 
     def pictures(String studentId, Long awardPublicId) {
-        println studentId
-        println awardPublicId
     }
 }

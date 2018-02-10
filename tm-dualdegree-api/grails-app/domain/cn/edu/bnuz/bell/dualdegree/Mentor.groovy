@@ -15,12 +15,18 @@ class Mentor {
      */
     Department department
 
+    /**
+     * 邮箱地址
+     */
+    String email
+
     static mapping = {
         comment '论文指导老师'
         table       schema: 'tm_dual'
         id generator: 'identity', comment: '无意义ID'
         department  comment: '聘用部门'
         teacher     comment: '教师'
+        email       comment: '邮件地址'
     }
 
     static constraints = {

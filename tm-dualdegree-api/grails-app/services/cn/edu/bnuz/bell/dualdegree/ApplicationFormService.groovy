@@ -141,6 +141,7 @@ select new map(
   form.dateModified as dateModified,
   form.dateSubmitted as dateSubmitted,
   approver.name as approver,
+  paperApprover.name as paperApprover,
   form.dateApproved as dateApproved,
   form.status as status,
   form.workflowInstance.id as workflowInstanceId
@@ -149,6 +150,7 @@ from DegreeApplication form
 join form.award award
 join form.student student
 left join form.approver approver
+left join form.paperApprover paperApprover
 where form.id = :id
 ''', [id: id]
         if (!results) {

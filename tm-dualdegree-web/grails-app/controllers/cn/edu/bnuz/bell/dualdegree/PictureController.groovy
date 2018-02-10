@@ -42,8 +42,6 @@ class PictureController {
             userId = securityService.userId
         }
         def picturePath = "${filesPath}/${awardId}/${userId}"
-        println picturePath
-        println fileName
         File file = new File(picturePath, fileName)
         output(file)
     }

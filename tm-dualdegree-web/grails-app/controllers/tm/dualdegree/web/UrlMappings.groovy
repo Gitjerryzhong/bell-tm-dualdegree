@@ -11,6 +11,7 @@ class UrlMappings {
         "/departments"(resources: 'department', includes: []) {
             "/students"(resources: 'studentAbroad', includes: ['index'])
             "/awards"(resources: 'award', includes: ['index'])
+            "/mentors"(resources: 'mentorForm', includes: ['index'])
             "/agreements"(resources: 'agreementPublicDept', includes: ['index'])
         }
 

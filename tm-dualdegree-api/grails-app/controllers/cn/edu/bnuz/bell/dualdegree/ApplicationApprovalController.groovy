@@ -17,6 +17,13 @@ class ApplicationApprovalController {
         renderJson(applicationApprovalService.list(approverId, cmd))
     }
 
+    def update(String approverId, Long id) {
+        def cmd = new MentorCommand()
+        bindData(cmd, request.JSON)
+        applicationApprovalService.setPaperApprover(id, cmd.teacherId)
+        renderOk()
+    }
+
     def show(String approverId, Long applicationApprovalId, String id, String type) {
         ListType listType = ListType.valueOf(type)
         if (id == 'undefined') {

@@ -98,6 +98,11 @@ class DegreeApplication implements StateObject {
      */
     WorkflowInstance workflowInstance
 
+    /**
+     * 论文互认表
+     */
+    PaperForm paperForm
+
     static mapping = {
         comment '出国学生学位申请'
         table                            schema: 'tm_dual'
@@ -120,6 +125,7 @@ class DegreeApplication implements StateObject {
         approver                         comment: '材料审批人'
         dateApproved                     comment: '材料审批时间'
         workflowInstance                 comment: '工作流实例'
+        paperForm                        comment: '论文互认表'
     }
     static constraints = {
         dateSubmitted           nullable: true
@@ -129,6 +135,7 @@ class DegreeApplication implements StateObject {
         datePaperApproved       nullable: true
         dateApproved            nullable: true
         workflowInstance        nullable: true
+        paperForm               nullable: true
     }
 
     String getWorkflowId() {

@@ -98,6 +98,6 @@ class DegreeApplicationStateMachineConfiguration extends EnumStateMachineConfigu
 
     @Bean
     Action<State, Event> progressEntryAction() {
-        new AutoEntryAction()
+        new ManualEntryAction('finish')
     }
 }
