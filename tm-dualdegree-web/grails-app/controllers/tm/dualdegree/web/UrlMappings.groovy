@@ -21,6 +21,7 @@ class UrlMappings {
 
         "/approvers"(resources: 'approver', includes: []) {
             "/applications"(resources: 'applicationApproval', includes: ['index'])
+            "/papers"(resources: 'paperApproval', includes: ['index'])
         }
 
         "/picture"(resource: 'picture', includes: ['show']) {

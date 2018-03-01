@@ -35,7 +35,9 @@ class PaperFormService {
         applicationForm.setDatePaperSubmitted(new Date())
         applicationForm.save()
 
-        domainStateMachineHandler.accept(applicationForm, studentId, applicationForm.approver.id)
+        //如果已指定导师则发给导师审核，否则发给管理员
+        def toUser = applicationForm.paperApprover ? applicationForm.paperApprover.id : applicationForm.approver.id
+        domainStateMachineHandler.accept(applicationForm, studentId, toUser)
         return form
     }
 }

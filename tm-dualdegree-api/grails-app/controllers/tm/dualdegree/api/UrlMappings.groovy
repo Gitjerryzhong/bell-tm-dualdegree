@@ -30,6 +30,9 @@ class UrlMappings {
                     "/mentors"(controller: 'mentor', action: 'index', method: 'GET')
                 }
             }
+            "/papers"(resources: 'paperApproval', includes: ['index', 'show', 'update']) {
+                "/workitems"(resources: 'paperApproval', includes: ['show', 'patch'])
+            }
         }
 
         "500"(view: '/error')

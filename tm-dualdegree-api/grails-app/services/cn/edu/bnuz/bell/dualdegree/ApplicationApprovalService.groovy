@@ -21,7 +21,6 @@ class ApplicationApprovalService {
     DataAccessService dataAccessService
     DomainStateMachineHandler domainStateMachineHandler
     ApplicationFormService applicationFormService
-    PaperApprovalService paperApprovalService
 
     def list(String userId, ListCommand cmd) {
         switch (cmd.type) {
@@ -30,9 +29,9 @@ class ApplicationApprovalService {
             case ListType.DONE:
                 return findDoneList(userId, cmd.args)
             case ListType.TOBE:
-                return [forms: paperApprovalService.findTobeList(userId, cmd.args), counts: getCounts(userId)]
+                return [forms: findTobeList(userId, cmd.args), counts: getCounts(userId)]
             case ListType.NEXT:
-                return [forms: paperApprovalService.findNextList(userId, cmd.args), counts: getCounts(userId)]
+                return [forms: findNextList(userId, cmd.args), counts: getCounts(userId)]
             default:
                 throw new BadRequestException()
         }
@@ -103,9 +102,98 @@ and form.approver.id = :teacherId
         [
                 (ListType.TODO): todo,
                 (ListType.DONE): done,
-                (ListType.TOBE): paperApprovalService.countTobeList(teacherId),
-                (ListType.NEXT): paperApprovalService.countNextList(teacherId),
+                (ListType.TOBE): countTobeList(teacherId),
+                (ListType.NEXT): countNextList(teacherId),
         ]
+    }
+
+    /**
+     * 未审核论文列表
+     * @param teacherId
+     * @param args
+     * @return
+     */
+    def findTobeList(String teacherId, Map args) {
+        DegreeApplication.executeQuery '''
+select new map(
+  form.id as id,
+  student.id as studentId,
+  student.name as studentName,
+  student.sex as sex,
+  adminClass.name as className,
+  form.dateSubmitted as date,
+  paperApprover.name as paperApprover,
+  form.status as status
+)
+from DegreeApplication form
+join form.student student
+join student.adminClass adminClass
+join form.award award
+left join form.paperApprover paperApprover
+where form.approver.id = :teacherId
+and current_date between award.requestBegin and award.approvalEnd
+and form.status = :status
+order by form.dateSubmitted
+''',[teacherId: teacherId, status: State.PROGRESS], args
+    }
+
+    /**
+     * 论文审核完成列表
+     * @param teacherId
+     * @param args
+     * @return
+     */
+    def findNextList(String teacherId, Map args) {
+        DegreeApplication.executeQuery '''
+select new map(
+  form.id as id,
+  student.id as studentId,
+  student.name as studentName,
+  student.sex as sex,
+  adminClass.name as className,
+  paperApprover.name as paperApprover,
+  form.dateSubmitted as date,
+  form.status as status
+)
+from DegreeApplication form
+join form.student student
+join student.adminClass adminClass
+left join form.paperApprover paperApprover
+where form.approver.id = :teacherId
+and form.datePaperApproved is not null
+and form.status = :status
+order by form.datePaperApproved desc
+''',[teacherId: teacherId, status: State.FINISHED], args
+    }
+
+    /**
+     * 未审核论文总算
+     * @param teacherId
+     * @return
+     */
+    def countTobeList(String teacherId) {
+        dataAccessService.getLong '''
+select count(*)
+from DegreeApplication form join form.award award
+where current_date between award.requestBegin and award.approvalEnd
+and form.status = :status
+and (form.approver.id = :teacherId or form.paperApprover.id = :teacherId)
+''', [teacherId: teacherId, status: State.PROGRESS]
+    }
+
+    /**
+     * 已完成论文审核总数
+     * @param teacherId
+     * @return
+     */
+    def countNextList(String teacherId) {
+        dataAccessService.getLong '''
+select count(*)
+from DegreeApplication form join form.award award
+where current_date between award.requestBegin and award.approvalEnd
+and form.status = :status
+and (form.approver.id = :teacherId or form.paperApprover.id = :teacherId)
+''', [teacherId: teacherId, status: State.FINISHED]
     }
 
     def getFormForReview(String teacherId, Long id, ListType type) {
@@ -219,7 +307,6 @@ order by form.dateApproved desc
     void accept(String userId, AcceptCommand cmd, UUID workitemId) {
         DegreeApplication form = DegreeApplication.get(cmd.id)
         domainStateMachineHandler.accept(form, userId, Activities.APPROVE, cmd.comment, workitemId, form.student.id)
-        form.approver = Teacher.load(userId)
         form.dateApproved = new Date()
         form.save()
     }
@@ -227,7 +314,6 @@ order by form.dateApproved desc
     void reject(String userId, RejectCommand cmd, UUID workitemId) {
         DegreeApplication form = DegreeApplication.get(cmd.id)
         domainStateMachineHandler.reject(form, userId, Activities.APPROVE, cmd.comment, workitemId)
-        form.approver = Teacher.load(userId)
         form.dateApproved = new Date()
         form.save()
     }
