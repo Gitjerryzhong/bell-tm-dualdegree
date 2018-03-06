@@ -8,7 +8,7 @@ import cn.edu.bnuz.bell.workflow.commands.AcceptCommand
 import cn.edu.bnuz.bell.workflow.commands.RejectCommand
 import org.springframework.security.access.prepost.PreAuthorize
 
-@PreAuthorize('hasAuthority("PERM_DUALDEGREE_APPROVE")')
+@PreAuthorize('hasAuthority("PERM_DUALDEGREE_PAPER_APPROVE")')
 class PaperApprovalController {
     PaperApprovalService paperApprovalService
 

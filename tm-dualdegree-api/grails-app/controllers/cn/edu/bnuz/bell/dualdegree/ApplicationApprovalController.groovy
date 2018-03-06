@@ -36,11 +36,11 @@ class ApplicationApprovalController {
     def patch(String approverId, Long applicationApprovalId, String id, String op) {
         def operation = Event.valueOf(op)
         switch (operation) {
-            case Event.ACCEPT:
+            case Event.NEXT:
                 def cmd = new AcceptCommand()
                 bindData(cmd, request.JSON)
                 cmd.id = applicationApprovalId
-                applicationApprovalService.accept(approverId, cmd, UUID.fromString(id))
+                applicationApprovalService.next(approverId, cmd, UUID.fromString(id))
                 break
             case Event.REJECT:
                 def cmd = new RejectCommand()
@@ -57,5 +57,9 @@ class ApplicationApprovalController {
 
     def proposer(String approverId, Long applicationApprovalId) {
         renderJson applicationReviewerService.getProposer(applicationApprovalId)
+    }
+
+    def tousers(String approverId, Long applicationApprovalId) {
+        renderJson applicationApprovalService.tousers(applicationApprovalId)
     }
 }

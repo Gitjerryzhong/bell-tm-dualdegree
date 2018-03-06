@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 class ApplicationFormController {
     ApplicationFormService applicationFormService
     ApplicationReviewerService applicationReviewerService
+    PaperFormService paperFormService
 
     /**
      * @param studentId 学号
@@ -49,7 +50,8 @@ class ApplicationFormController {
         renderJson ([
                         form: form,
                         award: applicationFormService.getAward((Long)form.awardId),
-                        fileNames: applicationFormService.findFiles(studentId, form.awardId)
+                        fileNames: applicationFormService.findFiles(studentId, form.awardId),
+                        paperForm: paperFormService.getPaperForm(studentId, id)
         ])
     }
 

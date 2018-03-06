@@ -96,8 +96,7 @@ where ba.approvalEnd >= :date and ba.department.id = :departmentId
     def update(String userId, ApplicationFormCommand cmd) {
         DegreeApplication form = DegreeApplication.load(cmd.id)
         Award award = Award.get(cmd.awardId)
-        Student student = Student.get(userId)
-        if (form.award != award || form.student != student) {
+        if (form.award != award || form.student.id != userId) {
             //无权更新
             throw new ForbiddenException()
         }
@@ -115,7 +114,7 @@ where ba.approvalEnd >= :date and ba.department.id = :departmentId
                 println it
             }
         }
-        domainStateMachineHandler.update(form, userId)
+//        domainStateMachineHandler.update(form, userId)
         return form
     }
 
@@ -175,8 +174,6 @@ where form.id = :id
         if (form.studentId != userId) {
             throw new ForbiddenException()
         }
-        form.editable = domainStateMachineHandler.canUpdate(form)
-
         return form
     }
 
@@ -276,5 +273,14 @@ where agRegion = saRegion and student.id = :studentId and student.major = agmj.m
 
     def getAward(Long awardId) {
         Award.get(awardId)
+    }
+
+    def getUser(Long id) {
+        DegreeApplication.executeQuery'''
+select new map(s.id as id, s.name as name)
+from DegreeApplication da 
+join da.student s
+where da.id = :id
+''', [id: id]
     }
 }

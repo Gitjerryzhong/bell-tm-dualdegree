@@ -2,7 +2,7 @@ package cn.edu.bnuz.bell.dualdegree
 
 import org.springframework.security.access.prepost.PreAuthorize
 
-@PreAuthorize('hasRole("ROLE_DUALDEGREE_MENTOR")')
+@PreAuthorize('hasAuthority("PERM_DUALDEGREE_PAPER_APPROVE")')
 class PaperApprovalController {
 
     def index() { }

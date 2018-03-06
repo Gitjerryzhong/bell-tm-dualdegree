@@ -1,10 +1,8 @@
 package cn.edu.bnuz.bell.dualdegree
 
 import cn.edu.bnuz.bell.http.BadRequestException
-import cn.edu.bnuz.bell.organization.Teacher
 import cn.edu.bnuz.bell.security.User
 import cn.edu.bnuz.bell.service.DataAccessService
-import cn.edu.bnuz.bell.workflow.Activities
 import cn.edu.bnuz.bell.workflow.DomainStateMachineHandler
 import cn.edu.bnuz.bell.workflow.ListCommand
 import cn.edu.bnuz.bell.workflow.ListType
@@ -24,16 +22,16 @@ class PaperApprovalService {
 
     def list(String userId, ListCommand cmd) {
         switch (cmd.type) {
-            case ListType.TOBE:
-                return [forms: findTobeList(userId, cmd.args), counts: getCounts(userId)]
-            case ListType.NEXT:
-                return [forms: findNextList(userId, cmd.args), counts: getCounts(userId)]
+            case ListType.TODO:
+                return [forms: findTodoList(userId, cmd.args), counts: getCounts(userId)]
+            case ListType.DONE:
+                return [forms: findDoneList(userId, cmd.args), counts: getCounts(userId)]
             default:
                 throw new BadRequestException()
         }
     }
 
-    def findTobeList(String teacherId, Map args) {
+    def findTodoList(String teacherId, Map args) {
         DegreeApplication.executeQuery '''
 select new map(
   form.id as id,
@@ -49,15 +47,16 @@ from DegreeApplication form
 join form.student student
 join student.adminClass adminClass
 join form.award award
-join form.paperApprover paperApprover
-where paperApprover.id = :teacherId
-and current_date between award.requestBegin and award.approvalEnd
-and form.status = :status
-order by form.dateSubmitted
-''',[teacherId: teacherId, status: State.PROGRESS], args
+join form.approver approver
+left join form.paperApprover paperApprover
+where current_date between award.requestBegin and award.approvalEnd
+and
+((approver.id = :teacherId and form.status = :status1) or (paperApprover.id = :teacherId and form.status = :status2))
+order by form.datePaperSubmitted
+''',[teacherId: teacherId, status1: State.STEP3, status2: State.STEP4], args
     }
 
-    def findNextList(String teacherId, Map args) {
+    def findDoneList(String teacherId, Map args) {
         DegreeApplication.executeQuery '''
 select new map(
   form.id as id,
@@ -75,35 +74,39 @@ join student.adminClass adminClass
 join form.paperApprover paperApprover
 where paperApprover.id = :teacherId
 and form.datePaperApproved is not null
-and form.status = :status
+and form.status <> :status
 order by form.datePaperApproved desc
-''',[teacherId: teacherId, status: State.FINISHED], args
+''',[teacherId: teacherId, status: State.STEP3], args
     }
 
-    def countTobeList(String teacherId) {
+    def countTodoList(String teacherId) {
+        dataAccessService.getLong '''
+select count(*)
+from DegreeApplication form 
+join form.award award 
+join form.approver approver
+left join form.paperApprover paperApprover
+where current_date between award.requestBegin and award.approvalEnd
+and
+((approver.id = :teacherId and form.status = :status1) or (paperApprover.id = :teacherId and form.status = :status2))
+''', [teacherId: teacherId, status1: State.STEP3, status2: State.STEP4]
+    }
+
+    def countDoneList(String teacherId) {
         dataAccessService.getLong '''
 select count(*)
 from DegreeApplication form join form.award award join form.paperApprover paperApprover
 where current_date between award.requestBegin and award.approvalEnd
-and form.status = :status
+and form.datePaperApproved is not null
+and form.status <> :status
 and paperApprover.id = :teacherId
-''', [teacherId: teacherId, status: State.PROGRESS]
-    }
-
-    def countNextList(String teacherId) {
-        dataAccessService.getLong '''
-select count(*)
-from DegreeApplication form join form.award award join form.paperApprover paperApprover
-where current_date between award.requestBegin and award.approvalEnd
-and form.status = :status
-and paperApprover.id = :teacherId
-''', [teacherId: teacherId, status: State.FINISHED]
+''', [teacherId: teacherId, status: State.STEP3]
     }
 
     def getCounts(String teacherId) {
         [
-            (ListType.TOBE): countTobeList(teacherId),
-            (ListType.NEXT): countNextList(teacherId),
+            (ListType.TODO): countTodoList(teacherId),
+            (ListType.DONE): countDoneList(teacherId),
         ]
     }
 
