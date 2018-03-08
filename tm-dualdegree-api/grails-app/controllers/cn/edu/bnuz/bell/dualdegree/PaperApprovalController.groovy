@@ -25,25 +25,23 @@ class PaperApprovalController {
         }
     }
 
-    def patch(String approverId, Long paperApprovalId, String id, String op) {
+    def patch(String approverId, Long id, String op) {
+
         def operation = Event.valueOf(op)
         switch (operation) {
-            case Event.ACCEPT:
-                def cmd = new AcceptCommand()
-                bindData(cmd, request.JSON)
-                cmd.id = paperApprovalId
-                paperApprovalService.accept(approverId, cmd, UUID.fromString(id))
+            case Event.FINISH:
+                paperApprovalService.finish(approverId, id)
                 break
             case Event.REJECT:
                 def cmd = new RejectCommand()
                 bindData(cmd, request.JSON)
-                cmd.id = paperApprovalId
-                paperApprovalService.reject(approverId, cmd, UUID.fromString(id))
+                cmd.id = id
+                paperApprovalService.reject(approverId, cmd)
                 break
             default:
                 throw new BadRequestException()
         }
 
-        show(approverId, paperApprovalId, id, 'tobe')
+        renderJson paperApprovalService.getFormForReview(approverId, id, ListType.TODO)
     }
 }

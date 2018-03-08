@@ -33,7 +33,7 @@ class UrlMappings {
                     "/mentors"(controller: 'mentor', action: 'index', method: 'GET')
                 }
             }
-            "/papers"(resources: 'paperApproval', includes: ['index', 'show', 'update']) {
+            "/papers"(resources: 'paperApproval') {
                 "/workitems"(resources: 'paperApproval', includes: ['show', 'patch'])
             }
         }

@@ -139,6 +139,7 @@ select new map(
   form.dateCreated as dateCreated,
   form.dateModified as dateModified,
   form.dateSubmitted as dateSubmitted,
+  approver.id as approverId,
   approver.name as approver,
   paperApprover.id as paperApproverId,
   paperApprover.name as paperApprover,

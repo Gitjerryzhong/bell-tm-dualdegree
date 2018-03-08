@@ -1,6 +1,8 @@
 package cn.edu.bnuz.bell.dualdegree
 
 import cn.edu.bnuz.bell.http.BadRequestException
+import cn.edu.bnuz.bell.http.ForbiddenException
+import cn.edu.bnuz.bell.http.NotFoundException
 import cn.edu.bnuz.bell.security.User
 import cn.edu.bnuz.bell.service.DataAccessService
 import cn.edu.bnuz.bell.workflow.DomainStateMachineHandler
@@ -98,9 +100,9 @@ select count(*)
 from DegreeApplication form join form.award award join form.paperApprover paperApprover
 where current_date between award.requestBegin and award.approvalEnd
 and form.datePaperApproved is not null
-and form.status <> :status
+and form.status = :status
 and paperApprover.id = :teacherId
-''', [teacherId: teacherId, status: State.STEP3]
+''', [teacherId: teacherId, status: State.FINISHED]
     }
 
     def getCounts(String teacherId) {
@@ -118,7 +120,7 @@ and paperApprover.id = :teacherId
                 WorkflowActivity.load("${DegreeApplication.WORKFLOW_ID}.process"),
                 User.load(teacherId),
         )
-        if (form.paperApproverId != teacherId) {
+        if (form.paperApproverId != teacherId && form.approverId != teacherId) {
             throw new BadRequestException()
         }
 
@@ -136,7 +138,7 @@ and paperApprover.id = :teacherId
     def getFormForReview(String teacherId, Long id, ListType type, UUID workitemId) {
         def form = applicationFormService.getFormInfo(id)
 
-        if (form.paperApproverId != teacherId) {
+        if (form.paperApproverId != teacherId && form.approverId != teacherId) {
             throw new BadRequestException()
         }
 
@@ -153,17 +155,19 @@ and paperApprover.id = :teacherId
 
     private Long getPrevReviewId(String teacherId, Long id, ListType type) {
         switch (type) {
-            case ListType.TOBE:
+            case ListType.TODO:
                 return dataAccessService.getLong('''
 select form.id
 from DegreeApplication form join form.award award
+join form.approver approver
+left join form.paperApprover paperApprover
 where current_date between award.requestBegin and award.approvalEnd
-and form.status = :status
-and form.paperApprover.id = :teacherId
+and
+((approver.id = :teacherId and form.status = :status1) or (paperApprover.id = :teacherId and form.status = :status2))
 and form.datePaperSubmitted < (select datePaperSubmitted from DegreeApplication where id = :id)
 order by form.datePaperSubmitted desc
-''', [teacherId: teacherId, id: id, status: State.PROGRESS])
-            case ListType.NEXT:
+''', [teacherId: teacherId, id: id, status1: State.STEP3, status2: State.STEP4])
+            case ListType.DONE:
                 return dataAccessService.getLong('''
 select form.id
 from DegreeApplication form
@@ -172,23 +176,25 @@ and form.datePaperApproved is not null
 and form.status <> :status
 and form.datePaperSubmitted < (select datePaperSubmitted from DegreeApplication where id = :id)
 order by form.datePaperSubmitted desc
-''', [teacherId: teacherId, id: id, status: State.PROGRESS])
+''', [teacherId: teacherId, id: id, status: State.STEP3])
         }
     }
 
     private Long getNextReviewId(String teacherId, Long id, ListType type) {
         switch (type) {
-            case ListType.TOBE:
+            case ListType.TODO:
                 return dataAccessService.getLong('''
 select form.id
 from DegreeApplication form join form.award award
+join form.approver approver
+left join form.paperApprover paperApprover
 where current_date between award.requestBegin and award.approvalEnd
-and form.status = :status
-and form.paperApprover.id = :teacherId
-and form.datePaperApproved > (select datePaperApproved from DegreeApplication where id = :id)
-order by form.datePaperApproved asc
-''', [teacherId: teacherId, id: id, status: State.PROGRESS])
-            case ListType.NEXT:
+and
+((approver.id = :teacherId and form.status = :status1) or (paperApprover.id = :teacherId and form.status = :status2))
+and form.datePaperSubmitted > (select datePaperSubmitted from DegreeApplication where id = :id)
+order by form.datePaperSubmitted asc
+''', [teacherId: teacherId, id: id, status1: State.STEP3, status2: State.STEP4])
+            case ListType.DONE:
                 return dataAccessService.getLong('''
 select form.id
 from DegreeApplication form
@@ -197,27 +203,48 @@ and form.datePaperApproved is not null
 and form.status <> :status
 and form.datePaperApproved < (select datePaperApproved from DegreeApplication where id = :id)
 order by form.datePaperApproved desc
-''', [teacherId: teacherId, id: id, status: State.PROGRESS])
+''', [teacherId: teacherId, id: id, status: State.STEP3])
         }
     }
 
-    void accept(String userId, AcceptCommand cmd, UUID workitemId) {
+    void reject(String teacherId, RejectCommand cmd) {
         DegreeApplication form = DegreeApplication.get(cmd.id)
-        if (form.paperApprover != userId) {
+        if (form.paperApprover != teacherId) {
             throw new BadRequestException()
         }
-        domainStateMachineHandler.accept(form, userId, 'process', cmd.comment, workitemId, form.student.id)
+        def workitem = Workitem.findByInstanceAndActivityAndToAndDateProcessedIsNull(
+                WorkflowInstance.load(form.workflowInstanceId),
+                WorkflowActivity.load("${DegreeApplication.WORKFLOW_ID}.process"),
+                User.load(teacherId),
+        )
+        domainStateMachineHandler.reject(form, teacherId, 'process', cmd.comment, workitem.id)
         form.datePaperApproved = new Date()
         form.save()
     }
 
-    void reject(String userId, RejectCommand cmd, UUID workitemId) {
-        DegreeApplication form = DegreeApplication.get(cmd.id)
-        if (form.paperApprover != userId) {
+    def finish(String teacherId, Long id) {
+        DegreeApplication form = DegreeApplication.get(id)
+
+        if (!form) {
+            throw new NotFoundException()
+        }
+
+        if (form.approver.id != teacherId && form.paperApprover.id != teacherId) {
+            throw new ForbiddenException()
+        }
+
+        if (!domainStateMachineHandler.canFinish(form)) {
             throw new BadRequestException()
         }
-        domainStateMachineHandler.reject(form, userId, 'process', cmd.comment, workitemId)
-        form.datePaperApproved = new Date()
+
+        def workitem = Workitem.findByInstanceAndActivityAndToAndDateProcessedIsNull(
+                WorkflowInstance.load(form.workflowInstanceId),
+                WorkflowActivity.load('dualdegree.application.finish'),
+                User.load(teacherId),
+        )
+
+        domainStateMachineHandler.finish(form, teacherId, workitem.id)
+
         form.save()
     }
 }
