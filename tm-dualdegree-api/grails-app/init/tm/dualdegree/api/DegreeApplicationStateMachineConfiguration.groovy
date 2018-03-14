@@ -33,6 +33,7 @@ class DegreeApplicationStateMachineConfiguration extends EnumStateMachineConfigu
                 .state(State.STEP1,     [actions.logEntryAction(), submittedEntryAction()], [actions.workitemProcessedAction()])
                 .state(State.STEP2,     [actions.logEntryAction(), approvedEntryAction()], [actions.workitemProcessedAction()])
                 .state(State.STEP3,     [actions.logEntryAction(), progressEntryAction()], [actions.workitemProcessedAction()])
+                .state(State.STEP4,     [actions.logEntryAction(), progressEntryAction()], [actions.workitemProcessedAction()])
                 .state(State.REJECTED,  [actions.logEntryAction(), actions.rejectedEntryAction()],  [actions.workitemProcessedAction()])
                 .state(State.FINISHED,  [actions.logEntryAction(), actions.notifySubmitterAction()], null)
     }

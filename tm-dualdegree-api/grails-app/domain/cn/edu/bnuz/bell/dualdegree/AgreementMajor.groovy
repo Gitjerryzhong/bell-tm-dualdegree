@@ -21,9 +21,15 @@ class AgreementMajor implements Serializable {
      */
     static belongsTo = [agreement: Agreement]
 
+    Date dateCreated
+
     static mapping = {
         comment                 '协议适用年级专业'
         table                   schema: 'tm_dual'
         id                      composite: ['agreement', 'major']
+    }
+
+    static constraints = {
+        dateCreated nullable: true
     }
 }

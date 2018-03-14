@@ -7,7 +7,8 @@ menuGroup 'main', {
         mentor              32, 'PERM_DUALDEGREE_DEPT_ADMIN', '/web/dualdegree/departments/${departmentId}/mentors'
         award               33, 'PERM_DUALDEGREE_DEPT_ADMIN', '/web/dualdegree/departments/${departmentId}/awards'
         applicationApproval 41, 'PERM_DUALDEGREE_DEPT_ADMIN', '/web/dualdegree/approvers/${userId}/applications'
-        paperApproval       42, 'PERM_DUALDEGREE_PAPER_APPROVE', '/web/dualdegree/approvers/${userId}/papers'
+        paperMentor         42, 'PERM_DUALDEGREE_DEPT_ADMIN', '/web/dualdegree/approvers/${userId}/papermentors'
+        paperApproval       43, 'PERM_DUALDEGREE_PAPER_APPROVE', '/web/dualdegree/approvers/${userId}/papers'
         agreementPublic     50, 'PERM_DUALDEGREE_AGREEMENT_READ', '/web/dualdegree/agreement-publics'
 
     }

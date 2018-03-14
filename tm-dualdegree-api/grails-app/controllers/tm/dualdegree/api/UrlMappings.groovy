@@ -36,6 +36,12 @@ class UrlMappings {
             "/papers"(resources: 'paperApproval') {
                 "/workitems"(resources: 'paperApproval', includes: ['show', 'patch'])
             }
+            "/papermentors"(resources: 'paperMentor') {
+                collection {
+                    "/tousers"(controller: 'paperMentor', action: 'tousers', method: 'GET')
+                }
+                "/workitems"(resources: 'paperMentor', includes: ['show', 'patch'])
+            }
         }
 
         "500"(view: '/error')

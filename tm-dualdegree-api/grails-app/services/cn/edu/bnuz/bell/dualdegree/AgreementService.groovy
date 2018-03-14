@@ -46,7 +46,8 @@ order by agreement.id
         cmd.addedItems.each { item ->
             form.addToItem(new AgreementMajor(
                     major: Major.load(item.id),
-                    majorOptions: item.majorOptions
+                    majorOptions: item.majorOptions,
+                    dateCreated: new Date()
             ))
 
 //          添加到自助打印系统中
@@ -184,7 +185,8 @@ where agreement.id = :id
                 if (!agreementItem) {
                     form.addToItem(new AgreementMajor(
                             major: major,
-                            majorOptions: item.majorOptions
+                            majorOptions: item.majorOptions,
+                            dateCreated: new Date()
                     ))
                 }
 
