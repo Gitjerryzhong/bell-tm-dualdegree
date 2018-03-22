@@ -1,5 +1,6 @@
 package cn.edu.bnuz.bell.dualdegree
 
+import cn.edu.bnuz.bell.dualdegree.utils.ImageUtil
 import cn.edu.bnuz.bell.security.SecurityService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
@@ -29,7 +30,8 @@ class PictureController {
             desFileName = 'none.jpg'
         }
         File file = new File(picturePath, "${desFileName}")
-        output(file)
+        Boolean thumbnail = (desFileName != 'none.jpg') && (desFileName != 'pdf.jpg')
+        output(file, thumbnail)
     }
 
     def fileView(String awardId, String studentId, String fileName) {
@@ -43,15 +45,21 @@ class PictureController {
         }
         def picturePath = "${filesPath}/${awardId}/${userId}"
         File file = new File(picturePath, fileName)
-        output(file)
+        output(file, false)
     }
 
-    private output(File file) {
+    private output(File file, Boolean thumbnail) {
         if (!file.exists()) {
             render status: HttpStatus.NOT_FOUND
         } else {
+            byte[] bytes = null
+            if (thumbnail) {
+                bytes = ImageUtil.thumbnailImage(file, 253, 192)
+            } else {
+                bytes = file.bytes
+            }
             response.contentType = URLConnection.guessContentTypeFromName(file.getName())
-            response.outputStream << file.bytes
+            response.outputStream << bytes
             response.outputStream.flush()
         }
     }

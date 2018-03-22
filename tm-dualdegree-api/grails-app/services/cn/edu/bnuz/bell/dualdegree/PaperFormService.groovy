@@ -67,6 +67,13 @@ where da.id = :id and da.student.id = :studentId
                 WorkflowActivity.load("${DegreeApplication.WORKFLOW_ID}.process"),
                 User.load(userId),
         )
+        if (!workitem) {
+            workitem = Workitem.findByInstanceAndActivityAndToAndDateProcessedIsNull(
+                    WorkflowInstance.load(form.workflowInstanceId),
+                    WorkflowActivity.load("${DegreeApplication.WORKFLOW_ID}.view"),
+                    User.load(userId),
+            )
+        }
         domainStateMachineHandler.next(form, userId, 'process', cmd.comment, workitem.id, cmd.to)
         form.datePaperSubmitted = new Date()
         form.save()

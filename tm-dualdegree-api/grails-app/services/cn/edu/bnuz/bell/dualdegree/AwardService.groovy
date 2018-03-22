@@ -29,7 +29,7 @@ order by ba.dateCreated desc
 ''', [userId: securityService.userId]
     }
 
-    def list(String studentId) {
+    def list(String departmentId) {
         Award.executeQuery'''
 select new map(
     ba.id   as id,
@@ -42,10 +42,10 @@ select new map(
     ba.dateCreated as dateCreated,
     ba.department.name as departmentName
 )
-from Award ba, Student st
-where ba.department = st.department and st.id = :userId
+from Award ba
+where ba.department.id = :departmentId
 order by ba.dateCreated desc
-''', [userId: studentId]
+''', [departmentId: departmentId]
     }
 
     /**

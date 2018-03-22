@@ -3,14 +3,19 @@ package tm.dualdegree.api
 import cn.edu.bnuz.bell.workflow.Activities
 import cn.edu.bnuz.bell.workflow.Event
 import cn.edu.bnuz.bell.workflow.State
+import cn.edu.bnuz.bell.workflow.actions.AbstractEntryAction
 import cn.edu.bnuz.bell.workflow.actions.AutoEntryAction
 import cn.edu.bnuz.bell.workflow.actions.ManualEntryAction
 import cn.edu.bnuz.bell.workflow.actions.SubmittedEntryAction
 import cn.edu.bnuz.bell.workflow.config.StandardActionConfiguration
+import cn.edu.bnuz.bell.workflow.events.EventData
+import cn.edu.bnuz.bell.workflow.events.ManualEventData
+import cn.edu.bnuz.bell.workflow.events.RejectEventData
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
+import org.springframework.statemachine.StateContext
 import org.springframework.statemachine.action.Action
 import org.springframework.statemachine.config.EnableStateMachine
 import org.springframework.statemachine.config.EnumStateMachineConfigurerAdapter
@@ -33,7 +38,8 @@ class DegreeApplicationStateMachineConfiguration extends EnumStateMachineConfigu
                 .state(State.STEP1,     [actions.logEntryAction(), submittedEntryAction()], [actions.workitemProcessedAction()])
                 .state(State.STEP2,     [actions.logEntryAction(), approvedEntryAction()], [actions.workitemProcessedAction()])
                 .state(State.STEP3,     [actions.logEntryAction(), progressEntryAction()], [actions.workitemProcessedAction()])
-                .state(State.STEP4,     [actions.logEntryAction(), progressEntryAction()], [actions.workitemProcessedAction()])
+                .state(State.STEP4,     [actions.logEntryAction(), finishEntryAction()], [actions.workitemProcessedAction()])
+                .state(State.STEP5,     [actions.logEntryAction(), actions.rejectedEntryAction()], [actions.workitemProcessedAction()])
                 .state(State.REJECTED,  [actions.logEntryAction(), actions.rejectedEntryAction()],  [actions.workitemProcessedAction()])
                 .state(State.FINISHED,  [actions.logEntryAction(), actions.notifySubmitterAction()], null)
     }
@@ -119,11 +125,47 @@ class DegreeApplicationStateMachineConfiguration extends EnumStateMachineConfigu
 
     @Bean
     Action<State, Event> approvedEntryAction() {
-        new ManualEntryAction('process')
+        new AbstractEntryAction() {
+            @Override
+            void execute(StateContext<State, Event> context) {
+                def data = context.getMessageHeader(EventData.KEY)
+                if (data instanceof ManualEventData ) {
+                    def event = data as ManualEventData
+                    workflowService.createWorkitem(data.entity.workflowInstance,
+                            event.fromUser,
+                            context.event,
+                            context.target.id,
+                            event.comment,
+                            event.ipAddress,
+                            event.toUser,
+                            'process',
+                    )
+
+                } else if (data instanceof RejectEventData) {
+                    def event = data as RejectEventData
+                    workflowService.createWorkitem(
+                            event.entity.workflowInstance,
+                            event.fromUser,
+                            context.event,
+                            context.target.id,
+                            event.comment,
+                            event.ipAddress,
+                            Activities.VIEW,
+                    )
+                } else {
+                    throw new Exception('Unsupported event type')
+                }
+            }
+        }
     }
 
     @Bean
     Action<State, Event> progressEntryAction() {
+        new ManualEntryAction('review')
+    }
+
+    @Bean
+    Action<State, Event> finishEntryAction() {
         new ManualEntryAction('finish')
     }
 }

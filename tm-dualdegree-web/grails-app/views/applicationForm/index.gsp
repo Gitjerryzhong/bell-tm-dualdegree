@@ -6,6 +6,7 @@
     <asset:script src="/static/js/app/dualdegree/student/application.js"></asset:script>
 </head>
 <body>
+%{--<application-view csrfHeaderName="${request._csrf.headerName}" csrfToken="${request._csrf.token}"></application-view>--}%
 <application-view></application-view>
 </body>
 </html>

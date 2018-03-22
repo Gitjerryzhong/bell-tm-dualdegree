@@ -8,11 +8,11 @@ class AwardPublicController {
     AwardService awardService
     SecurityService securityService
 
-    def index(String studentId) {
-        renderJson(awardService.list(studentId))
+    def index() {
+        renderJson(awardService.list(securityService.departmentId))
     }
 
-    def show(String studentId, Long id) {
+    def show( Long id) {
         def form = awardService.getFormForShow(id)
         if (form.departmentId != securityService.departmentId) {
             renderBadRequest()

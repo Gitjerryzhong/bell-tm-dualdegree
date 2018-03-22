@@ -15,13 +15,17 @@ class UrlMappings {
             "/agreements"(controller: 'agreementPublic', action: 'agreementsOfDept', method: 'GET')
         }
 
+        "/awards"(resources: 'awardPublic', ['show'])
+
         "/students"(resources: 'student', includes: []) {
-            "/awards"(resources: 'awardPublic', ['show'])
             "/applications"(resources: 'applicationForm') {
                 "/approvers"(controller: 'applicationForm', action: 'approvers', method: 'GET')
                 "/papers"(resources: 'paperForm')
                 "/tousers"(controller: 'paperForm', action: 'tousers', method: 'GET')
                 "/workitems"(resources: 'paperForm', includes: ['show', 'patch'])
+                collection {
+                    "/upload"(controller: 'applicationForm', action: 'upload', method: 'POST')
+                }
             }
         }
 
@@ -37,9 +41,7 @@ class UrlMappings {
                 "/workitems"(resources: 'paperApproval', includes: ['show', 'patch'])
             }
             "/papermentors"(resources: 'paperMentor') {
-                collection {
-                    "/tousers"(controller: 'paperMentor', action: 'tousers', method: 'GET')
-                }
+                "/tousers"(controller: 'paperMentor', action: 'tousers', method: 'GET')
                 "/workitems"(resources: 'paperMentor', includes: ['show', 'patch'])
             }
         }

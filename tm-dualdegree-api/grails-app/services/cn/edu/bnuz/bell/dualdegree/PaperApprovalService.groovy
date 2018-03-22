@@ -133,6 +133,7 @@ and (approver.id = :teacherId or paperApprover.id = :teacherId)
                 fileNames          : applicationFormService.findFiles(form.studentId, form.awardId),
                 prevId             : getPrevReviewId(teacherId, id, type),
                 nextId             : getNextReviewId(teacherId, id, type),
+                paperForm          : getPaperForm(id),
         ]
     }
 
@@ -151,7 +152,23 @@ and (approver.id = :teacherId or paperApprover.id = :teacherId)
                 fileNames          : applicationFormService.findFiles(form.studentId, form.awardId),
                 prevId             : getPrevReviewId(teacherId, id, type),
                 nextId             : getNextReviewId(teacherId, id, type),
+                paperForm          : getPaperForm(id),
         ]
+    }
+
+    private Map getPaperForm(Long mainFormId) {
+        def result = DegreeApplication.executeQuery'''
+select new map(
+p.type as type,
+p.chineseTitle as chineseTitle,
+p.englishTitle as englishTitle,
+p.name as name
+) from DegreeApplication da join da.paperForm p where da.id = :id
+''', [id: mainFormId]
+        if (result) {
+            return result[0]
+        }
+        return null
     }
 
     private Long getPrevReviewId(String teacherId, Long id, ListType type) {
@@ -210,15 +227,22 @@ order by form.datePaperApproved desc
 
     void reject(String teacherId, RejectCommand cmd) {
         DegreeApplication form = DegreeApplication.get(cmd.id)
-        if (form.paperApprover != teacherId) {
+        if (form.approver.id != teacherId && form.paperApprover.id != teacherId) {
             throw new BadRequestException()
         }
         def workitem = Workitem.findByInstanceAndActivityAndToAndDateProcessedIsNull(
                 WorkflowInstance.load(form.workflowInstanceId),
-                WorkflowActivity.load("${DegreeApplication.WORKFLOW_ID}.process"),
+                WorkflowActivity.load("${DegreeApplication.WORKFLOW_ID}.review"),
                 User.load(teacherId),
         )
-        domainStateMachineHandler.reject(form, teacherId, 'process', cmd.comment, workitem.id)
+        if (!workitem) {
+            workitem = Workitem.findByInstanceAndActivityAndToAndDateProcessedIsNull(
+                    WorkflowInstance.load(form.workflowInstanceId),
+                    WorkflowActivity.load("${DegreeApplication.WORKFLOW_ID}.finish"),
+                    User.load(teacherId),
+            )
+        }
+        domainStateMachineHandler.reject(form, teacherId, 'finish', cmd.comment, workitem.id)
         form.datePaperApproved = new Date()
         form.save()
     }
@@ -243,6 +267,13 @@ order by form.datePaperApproved desc
                 WorkflowActivity.load('dualdegree.application.finish'),
                 User.load(teacherId),
         )
+        if (!workitem) {
+            workitem = Workitem.findByInstanceAndActivityAndToAndDateProcessedIsNull(
+                    WorkflowInstance.load(form.workflowInstanceId),
+                    WorkflowActivity.load('dualdegree.application.review'),
+                    User.load(teacherId),
+            )
+        }
 
         domainStateMachineHandler.finish(form, teacherId, workitem.id)
         form.datePaperApproved = new Date()

@@ -34,6 +34,7 @@ class PaperMentorController {
     }
 
     def patch(String approverId, Long paperMentorId, String id, String op) {
+
         def operation = Event.valueOf(op)
         switch (operation) {
             case Event.NEXT:
@@ -55,7 +56,7 @@ class PaperMentorController {
         show(approverId, paperMentorId, id, 'todo')
     }
 
-    def tousers(String approverId) {
+    def tousers(String approverId, Long paperMentorId) {
         renderJson paperMentorService.tousers()
     }
 }

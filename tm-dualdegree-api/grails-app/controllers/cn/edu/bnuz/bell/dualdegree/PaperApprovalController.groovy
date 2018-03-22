@@ -26,7 +26,10 @@ class PaperApprovalController {
     }
 
     def patch(String approverId, Long id, String op) {
-
+        Long formId = id
+        if (!formId) {
+            formId = params.getLong("paperApprovalId")
+        }
         def operation = Event.valueOf(op)
         switch (operation) {
             case Event.FINISH:
@@ -35,13 +38,13 @@ class PaperApprovalController {
             case Event.REJECT:
                 def cmd = new RejectCommand()
                 bindData(cmd, request.JSON)
-                cmd.id = id
+                cmd.id = formId
                 paperApprovalService.reject(approverId, cmd)
                 break
             default:
                 throw new BadRequestException()
         }
 
-        renderJson paperApprovalService.getFormForReview(approverId, id, ListType.TODO)
+        renderJson paperApprovalService.getFormForReview(approverId, formId, ListType.TODO)
     }
 }

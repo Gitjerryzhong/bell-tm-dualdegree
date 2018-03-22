@@ -2,6 +2,7 @@ package cn.edu.bnuz.bell.dualdegree
 
 import cn.edu.bnuz.bell.workflow.Event
 import cn.edu.bnuz.bell.workflow.commands.SubmitCommand
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.access.prepost.PreAuthorize
 
 @PreAuthorize('hasRole("ROLE_DUALDEGREE_STUDENT")')
@@ -9,6 +10,9 @@ class ApplicationFormController {
     ApplicationFormService applicationFormService
     ApplicationReviewerService applicationReviewerService
     PaperFormService paperFormService
+
+    @Value('${bell.student.filesPath}')
+    String filesPath
 
     /**
      * @param studentId 学号
@@ -101,5 +105,40 @@ class ApplicationFormController {
         } else {
             renderJson applicationReviewerService.getApprovers(applicationFormId)
         }
+    }
+
+    /**
+     * 上传文件
+     */
+    def upload(String studentId, Long awardId) {
+        def prefix = params.prefix
+        def file = request.getFile('file')
+        if (prefix && !file.empty) {
+            def filename=file.originalFilename
+            def type=filename.substring(filename.lastIndexOf(".") + 1).toLowerCase()
+            def filePath = "${filesPath}/${awardId}/${studentId}"
+            File dir= new File(filePath)
+            if (!dir.exists() || dir.isFile()) {
+                dir.mkdirs()
+            } else {
+                Date date = new Date()
+                for (File f: dir.listFiles()) {
+                    if (f.name.indexOf("${prefix}_${studentId}") != -1) {
+                        // 备份原上传文件
+                        def name = "${filePath}/bak_${prefix}.${date.time}" +
+                                    ".${f.name.substring(f.name.lastIndexOf(".") + 1).toLowerCase()}"
+                        println name + "${date.time}"
+                        f.renameTo(name)
+                    }
+                }
+            }
+
+            file.transferTo( new File("${filePath}/${prefix}_${studentId}.${type}") )
+
+            renderOk()
+        } else {
+            renderBadRequest()
+        }
+
     }
 }

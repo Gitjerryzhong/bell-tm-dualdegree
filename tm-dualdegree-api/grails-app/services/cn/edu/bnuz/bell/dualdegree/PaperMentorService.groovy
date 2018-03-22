@@ -14,6 +14,7 @@ import cn.edu.bnuz.bell.workflow.WorkflowActivity
 import cn.edu.bnuz.bell.workflow.WorkflowInstance
 import cn.edu.bnuz.bell.workflow.Workitem
 import cn.edu.bnuz.bell.workflow.commands.AcceptCommand
+import cn.edu.bnuz.bell.workflow.commands.RejectCommand
 import grails.gorm.transactions.Transactional
 
 @Transactional
@@ -116,7 +117,7 @@ and approver.id = :teacherId
 
         def workitem = Workitem.findByInstanceAndActivityAndToAndDateProcessedIsNull(
                 WorkflowInstance.load(form.workflowInstanceId),
-                WorkflowActivity.load("${DegreeApplication.WORKFLOW_ID}.finish"),
+                WorkflowActivity.load("${DegreeApplication.WORKFLOW_ID}.review"),
                 User.load(teacherId),
         )
         if (form.approverId != teacherId) {
@@ -131,6 +132,7 @@ and approver.id = :teacherId
                 fileNames          : applicationFormService.findFiles(form.studentId, form.awardId),
                 prevId             : getPrevReviewId(teacherId, id, type),
                 nextId             : getNextReviewId(teacherId, id, type),
+                paperForm          : getPaperForm(id),
         ]
     }
 
@@ -149,7 +151,23 @@ and approver.id = :teacherId
                 fileNames          : applicationFormService.findFiles(form.studentId, form.awardId),
                 prevId             : getPrevReviewId(teacherId, id, type),
                 nextId             : getNextReviewId(teacherId, id, type),
+                paperForm          : getPaperForm(id),
         ]
+    }
+
+    private Map getPaperForm(Long mainFormId) {
+        def result = DegreeApplication.executeQuery'''
+select new map(
+p.type as type,
+p.chineseTitle as chineseTitle,
+p.englishTitle as englishTitle,
+p.name as name
+) from DegreeApplication da join da.paperForm p where da.id = :id
+''', [id: mainFormId]
+        if (result) {
+            return result[0]
+        }
+        return null
     }
 
     private Long getPrevReviewId(String teacherId, Long id, ListType type) {
@@ -194,8 +212,8 @@ select form.id
 from DegreeApplication form
 where form.approver.id = :teacherId
 and form.status = :status
-and form.datePaperApproved < (select datePaperApproved from DegreeApplication where id = :id)
-order by form.datePaperApproved desc
+and form.datePaperSubmitted > (select datePaperSubmitted from DegreeApplication where id = :id)
+order by form.datePaperSubmitted asc
 ''', [teacherId: teacherId, id: id, status: State.STEP4])
         }
     }
@@ -224,14 +242,24 @@ where d.id = :department
             if (form) {
                 def workitem = Workitem.findByInstanceAndActivityAndToAndDateProcessedIsNull(
                         WorkflowInstance.load(form.workflowInstanceId),
-                        WorkflowActivity.load("${DegreeApplication.WORKFLOW_ID}.finish"),
+                        WorkflowActivity.load("${DegreeApplication.WORKFLOW_ID}.review"),
                         User.load(userId),
                 )
 
-                domainStateMachineHandler.next(form, userId, 'finish', null, workitem?.id, cmd.teacherId)
+                domainStateMachineHandler.next(form, userId, 'finish', null, workitem.id, cmd.teacherId)
                 form.paperApprover = Teacher.load(cmd.teacherId)
                 form.save()
             }
         }
+    }
+
+    void reject(String teacherId, RejectCommand cmd, UUID id) {
+        DegreeApplication form = DegreeApplication.get(cmd.id)
+        if (form.approver.id != teacherId) {
+            throw new BadRequestException()
+        }
+        domainStateMachineHandler.reject(form, teacherId, 'review', cmd.comment, id)
+        form.paperApprover = null
+        form.save()
     }
 }
