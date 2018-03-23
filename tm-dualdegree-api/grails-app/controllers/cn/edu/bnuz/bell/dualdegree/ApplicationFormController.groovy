@@ -125,9 +125,10 @@ class ApplicationFormController {
                 for (File f: dir.listFiles()) {
                     if (f.name.indexOf("${prefix}_${studentId}") != -1) {
                         // 备份原上传文件
-                        def name = "${filePath}/bak_${prefix}.${date.time}" +
+                        def names = dir.list().join(";")
+                        def frequence = (names=~"bak_${prefix}")
+                        def name = "${filePath}/bak_${prefix}_${frequence.size() + 1}" +
                                     ".${f.name.substring(f.name.lastIndexOf(".") + 1).toLowerCase()}"
-                        println name + "${date.time}"
                         f.renameTo(name)
                     }
                 }

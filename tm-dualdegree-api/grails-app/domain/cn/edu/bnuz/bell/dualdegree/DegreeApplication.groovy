@@ -101,7 +101,7 @@ class DegreeApplication implements StateObject {
     /**
      * 论文互认表
      */
-    PaperForm paperForm
+    static hasOne = [paperForm: PaperForm]
 
     static mapping = {
         comment '出国学生学位申请'

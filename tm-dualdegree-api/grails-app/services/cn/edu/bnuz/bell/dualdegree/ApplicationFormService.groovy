@@ -260,14 +260,22 @@ where agRegion = saRegion and student.id = :studentId and student.major = agmj.m
         if (!dir.exists()) {
             return [:]
         }
-        Map<String, String> fileNames = [:]
+        Map<String, Object> fileNames = [:]
         for (File file: dir.listFiles()) {
             def index = file.name.indexOf('_')
             if (index == -1) {
                 continue
             }
             String key = file.name.substring(0, index)
-            fileNames[key] = file.name
+            if (key == 'bak') {
+                key = file.name.substring(0,file.name.indexOf('_', 4))
+                if (key == 'bak_paper' || key == 'bak_review') {
+                    fileNames[key] = fileNames[key] ? fileNames[key] + [file.name] : [file.name]
+                }
+            } else {
+                fileNames[key] = file.name
+            }
+
         }
         return fileNames
     }

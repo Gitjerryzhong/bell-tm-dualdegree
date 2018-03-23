@@ -27,8 +27,6 @@ class PaperForm {
      */
     String name
 
-    static belongsTo = [form: DegreeApplication]
-
     static mapping = {
         comment '论文互认表'
         table                 schema: 'tm_dual'
@@ -37,5 +35,6 @@ class PaperForm {
         chineseTitle          length: 100, comment: '中文题目'
         englishTitle          length: 500, comment: '英文题目'
         name                  length: 255, comment: '互认课程名称'
+        form                  comment: '关联表单'
     }
 }

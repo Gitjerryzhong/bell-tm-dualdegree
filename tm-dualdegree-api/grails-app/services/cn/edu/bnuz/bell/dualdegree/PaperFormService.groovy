@@ -34,13 +34,21 @@ where da.id = :id and da.student.id = :studentId
         if (!applicationForm) {
             throw new BadLocationException()
         }
-        PaperForm form = new PaperForm(
-                name: cmd.name,
-                type: cmd.type,
-                chineseTitle: cmd.chineseTitle,
-                englishTitle: cmd.englishTitle,
-                form: applicationForm
-        )
+        PaperForm form = applicationForm.paperForm
+        if (!form) {
+            form = new PaperForm(
+                    name: cmd.name,
+                    type: cmd.type,
+                    chineseTitle: cmd.chineseTitle,
+                    englishTitle: cmd.englishTitle,
+                    form: applicationForm
+            )
+        } else {
+            form.name = cmd.name
+            form.type = cmd.type
+            form.chineseTitle = cmd.chineseTitle
+            form.englishTitle = cmd.englishTitle
+        }
         form.save()
         applicationForm.setPaperForm(form)
         applicationForm.setDatePaperSubmitted(new Date())

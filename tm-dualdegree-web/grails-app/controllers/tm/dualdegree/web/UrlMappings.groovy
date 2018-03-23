@@ -29,6 +29,7 @@ class UrlMappings {
             collection {
                 "/fileview"(action: 'fileView', method: 'GET')
                 "/filesrc"(action: 'fileSource', method: 'GET')
+                "/download"(action: 'download', method: 'GET')
             }
         }
 
