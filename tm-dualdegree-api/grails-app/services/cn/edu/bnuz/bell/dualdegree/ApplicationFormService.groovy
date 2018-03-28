@@ -3,7 +3,9 @@ package cn.edu.bnuz.bell.dualdegree
 import cn.edu.bnuz.bell.http.BadRequestException
 import cn.edu.bnuz.bell.http.ForbiddenException
 import cn.edu.bnuz.bell.http.NotFoundException
+import cn.edu.bnuz.bell.organization.Department
 import cn.edu.bnuz.bell.organization.Student
+import cn.edu.bnuz.bell.organization.Teacher
 import cn.edu.bnuz.bell.security.SecurityService
 import cn.edu.bnuz.bell.workflow.DomainStateMachineHandler
 import cn.edu.bnuz.bell.workflow.commands.SubmitCommand
@@ -157,8 +159,14 @@ where form.id = :id
         if (!results) {
             return null
         }
+        def form = results[0]
+        if (form.paperApproverId) {
+            form['mentorEmail'] = Mentor.findByTeacherAndDepartment(
+                    Teacher.load(form.paperApproverId),
+                    Department.load(securityService.departmentId))?.email
+        }
 
-        return results[0]
+        return form
     }
 
     /**
