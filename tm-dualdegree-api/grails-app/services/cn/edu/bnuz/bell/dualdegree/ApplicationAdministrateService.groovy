@@ -43,4 +43,32 @@ order by form.dateSubmitted
                 paperForm: paperFormService.getPaperForm(form.studentId, id)
         ]
     }
+
+    def findUsers(String departmentId, Long awardId, String status) {
+        DegreeApplication.executeQuery '''
+select new map(
+    student.id as id, 
+    student.name as name
+)
+from DegreeApplication form
+join form.student student
+join form.award award
+join award.department department
+where department.id = :departmentId and award.id = :awardId and form.status = :status
+''',[departmentId: departmentId, awardId: awardId, status: status]
+    }
+
+    def findUsers(String departmentId, Long awardId) {
+        DegreeApplication.executeQuery '''
+select new map(
+    student.id as id, 
+    student.name as name
+)
+from DegreeApplication form
+join form.student student
+join form.award award
+join award.department department
+where department.id = :departmentId and award.id = :awardId and form.status <> 'CREATED' and form.status <> 'REJECTED'
+''',[departmentId: departmentId, awardId: awardId]
+    }
 }

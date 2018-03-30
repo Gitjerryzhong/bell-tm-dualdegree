@@ -12,6 +12,7 @@ class UrlMappings {
             "/students"(resources: 'studentAbroad')
             "/awards"(resources: 'award') {
                 "/applications"(resources: 'applicationAdministrate')
+                "/attachments"(controller: 'applicationAdministrate', action: 'attachments', method: 'GET')
             }
             "/mentors"(resources: 'mentor')
             "/agreements"(controller: 'agreementPublic', action: 'agreementsOfDept', method: 'GET')
