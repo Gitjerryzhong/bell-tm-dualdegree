@@ -35,7 +35,6 @@ class ApplicationReportController {
             default:
                 throw new BadRequestException()
         }
-        println reportName
         report(new ReportRequest(
                 reportService: 'tm-report',
                 reportName: reportName,

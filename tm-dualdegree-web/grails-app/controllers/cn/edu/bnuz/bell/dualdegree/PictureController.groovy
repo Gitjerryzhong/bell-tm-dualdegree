@@ -34,9 +34,7 @@ class PictureController {
         output(file, thumbnail)
     }
 
-    def fileView(String awardId, String studentId, String fileName) {
-//        output(awardId, fileName)
-    }
+    def fileView(String awardId, String studentId, String fileName) { }
 
     def fileSource(String awardId, String studentId, String fileName) {
         def userId = studentId

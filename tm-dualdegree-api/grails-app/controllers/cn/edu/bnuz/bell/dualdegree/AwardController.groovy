@@ -38,7 +38,6 @@ class AwardController {
      * 创建
      */
     def create() {
-        println awardService.message.title
         renderJson([
                 form: [ ],
                 departments: awardService.myDepartments

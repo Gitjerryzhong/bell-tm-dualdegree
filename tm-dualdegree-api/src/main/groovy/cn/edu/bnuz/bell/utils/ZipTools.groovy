@@ -36,7 +36,6 @@ class ZipTools {
             File[] files = dir.listFiles();
             for (File file:files) {
                 if(file.name.indexOf(pre)!=-1){
-                    println file.name
                     return file
                 }
             }

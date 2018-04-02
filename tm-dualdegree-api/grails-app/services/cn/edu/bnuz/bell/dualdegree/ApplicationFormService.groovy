@@ -116,7 +116,6 @@ where ba.approvalEnd >= :date and ba.department.id = :departmentId
                 println it
             }
         }
-//        domainStateMachineHandler.update(form, userId)
         return form
     }
 
@@ -234,7 +233,6 @@ where form.id = :id
         if (!domainStateMachineHandler.canSubmit(form)) {
             throw new BadRequestException()
         }
-        println cmd.to
         domainStateMachineHandler.submit(form, userId, cmd.to, cmd.comment, cmd.title)
 
         form.dateSubmitted = new Date()
